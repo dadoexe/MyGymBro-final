@@ -88,41 +88,43 @@ public class GraphicWorkoutBuilderView implements WorkoutBuilderView, GraphicVie
     }
 
     private void setupDeleteColumn() {
-        javafx.util.Callback<TableColumn<WorkoutExerciseBean, Void>, TableCell<WorkoutExerciseBean, Void>> cellFactory = new javafx.util.Callback<>() {
-            @Override
-            public TableCell<WorkoutExerciseBean, Void> call(final TableColumn<WorkoutExerciseBean, Void> param) {
-                return new TableCell<>() {
-                    // Creiamo il bottone ma NON lo configuriamo qui (via l'initializer block!)
-                    private final Button btn = new Button("X");
+        // Ora la complessità è 1! Tutta la logica è nella classe DeleteButtonCell
+        colDelete.setCellFactory(param -> new DeleteButtonCell());
+    }
 
-                    @Override
-                    public void updateItem(Void item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            // CONFIGURIAMO QUI (Soluzione pulita e sicura)
-                            btn.setStyle("-fx-background-color: #FF5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+    // --- CLASSE INTERNA PER RIDURRE LA COMPLESSITÀ ---
+    private class DeleteButtonCell extends TableCell<WorkoutExerciseBean, Void> {
+        private final Button btn = new Button("X");
 
-                            // L'azione va definita qui per essere sicuri di prendere l'indice aggiornato
-                            btn.setOnAction(event -> {
-                                // Controllo di sicurezza sull'indice
-                                if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
-                                    WorkoutExerciseBean exercise = getTableView().getItems().get(getIndex());
-                                    if (listener != null) {
-                                        listener.removeExerciseFromPlan(exercise);
-                                    }
-                                }
-                            });
+        public DeleteButtonCell() {
+            // Configurazione Stile
+            btn.setStyle("-fx-background-color: #FF5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
 
-                            setGraphic(btn);
-                        }
+            // Azione al click
+            btn.setOnAction(event -> {
+                // Recuperiamo la TableView e l'indice corrente
+                TableView<WorkoutExerciseBean> table = getTableView();
+                int index = getIndex();
+
+                // Controllo di sicurezza: l'indice deve essere valido e la tabella non null
+                if (table != null && index >= 0 && index < table.getItems().size()) {
+                    WorkoutExerciseBean exercise = table.getItems().get(index);
+                    if (listener != null) {
+                        listener.removeExerciseFromPlan(exercise);
                     }
-                };
-            }
-        };
+                }
+            });
+        }
 
-        colDelete.setCellFactory(cellFactory);
+        @Override
+        protected void updateItem(Void item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty) {
+                setGraphic(null);
+            } else {
+                setGraphic(btn);
+            }
+        }
     }
 
     // --- LOGICA DI RICERCA LIVE (API) ---

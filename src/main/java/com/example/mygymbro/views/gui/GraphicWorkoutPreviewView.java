@@ -7,6 +7,7 @@ import com.example.mygymbro.views.WorkoutPreviewView;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 
@@ -43,6 +44,19 @@ public class GraphicWorkoutPreviewView implements WorkoutPreviewView, GraphicVie
     @Override public void setListener(PreviewController c) { this.listener = c; }
     @Override public Parent getRoot() { return root; }
     @Override public void setRoot(Parent root) { this.root = root; }
-    @Override public void showError(String msg) {} // Alert opzionale
-    @Override public void showSuccess(String msg) {}
+    @Override
+    public void showError(String msg) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR, msg);
+            alert.showAndWait();
+        });
+    }
+
+    @Override
+    public void showSuccess(String msg) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, msg);
+            alert.showAndWait();
+        });
+    }
 }

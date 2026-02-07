@@ -2,6 +2,7 @@ package com.example.mygymbro.dao;
 
 import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.User;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,9 +14,10 @@ public class InMemoryPersonalTrainerDAO implements PersonalTrainerDAO {
 
         // Scorre la lista statica condivisa in InMemoryUserDAO
         for (User u : InMemoryUserDAO.ramDB) {
-            // Se l'oggetto è un'istanza di Athlete, lo aggiunge alla lista
-            if (u instanceof Athlete) {
-                athletes.add((Athlete) u);
+            // CORREZIONE: Pattern Matching (Java 14+)
+            // Invece di fare il check e poi il cast ((Athlete) u), facciamo tutto insieme.
+            if (u instanceof Athlete athlete) {
+                athletes.add(athlete);
             }
         }
         return athletes;
