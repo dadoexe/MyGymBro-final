@@ -1,6 +1,4 @@
 package com.example.mygymbro.dao;
-
-import com.example.mygymbro.bean.WorkoutPlanBean; // Se serve
 import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.WorkoutPlan;
 import com.example.mygymbro.exceptions.DAOException; // Importa la tua eccezione

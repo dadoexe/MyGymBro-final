@@ -1,9 +1,5 @@
 package com.example.mygymbro.model;
 
-import com.example.mygymbro.bean.WorkoutPlanBean;
-
-import java.util.List;
-
 /**
  * Questa classe rappresenta un esercizio all'interno di una scheda specifica.
  * Contiene i parametri di esecuzione (serie, ripetizioni, recupero)
@@ -41,7 +37,7 @@ public class WorkoutExercise {
     public float calculateVolume() {
         // Se avessi il campo "peso", faresti: sets * reps * weight
         // Basandoci sul diagramma attuale (senza peso), calcoliamo il volume di ripetizioni totali.
-        return (float) (sets * reps);
+        return (sets * reps);
     }
 
     /**
