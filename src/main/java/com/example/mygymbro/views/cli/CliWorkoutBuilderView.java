@@ -110,7 +110,8 @@ public class CliWorkoutBuilderView implements WorkoutBuilderView, CliView {
         // 2. Mostriamo i risultati numerati
         System.out.println("\nRisultati trovati:");
         for (int i = 0; i < results.size(); i++) {
-            System.out.printf("%d. %s (%s)\n", (i + 1), results.get(i).getName(), results.get(i).getMuscleGroup());
+            // CORREZIONE: Usa %n invece di \n per andare a capo in modo portabile
+            System.out.printf("%d. %s (%s)%n", (i + 1), results.get(i).getName(), results.get(i).getMuscleGroup());
         }
 
         // 3. Selezione utente
@@ -124,7 +125,8 @@ public class CliWorkoutBuilderView implements WorkoutBuilderView, CliView {
                 System.out.println("Numero non valido.");
             }
         } catch (NumberFormatException e) {
-            System.out.println("Input non valido. Inserisci un numero.");
+            // CORREZIONE: Usiamo 'e'
+            System.out.println("Input non valido. Inserisci un numero. (" + e.getMessage() + ")");
         }
     }
 
@@ -154,7 +156,8 @@ public class CliWorkoutBuilderView implements WorkoutBuilderView, CliView {
             }
 
         } catch (NumberFormatException e) {
-            System.out.println("Errore: devi inserire numeri interi validi.");
+            // CORREZIONE: Usiamo 'e'
+            System.out.println("Errore: devi inserire numeri interi validi. Dettaglio: " + e.getMessage());
         }
     }
 
@@ -172,8 +175,8 @@ public class CliWorkoutBuilderView implements WorkoutBuilderView, CliView {
                 if (listener != null) listener.removeExerciseFromPlan(removed);
                 System.out.println("Esercizio rimosso.");
             }
-        } catch (Exception e) {
-            System.out.println("Errore input.");
+        } catch (NumberFormatException e) { // CORREZIONE: Era 'Exception', ora specifico
+            System.out.println("Errore input: " + e.getMessage());
         }
     }
 
@@ -182,12 +185,14 @@ public class CliWorkoutBuilderView implements WorkoutBuilderView, CliView {
         if (addedExercises == null || addedExercises.isEmpty()) {
             System.out.println("(Nessun esercizio aggiunto)");
         } else {
-            System.out.printf("%-3s | %-25s | %-5s | %-5s | %-5s\n", "N.", "Nome", "Sets", "Reps", "Rec");
-            System.out.println("-------------------------------------------------------------");
+            // CORREZIONE: %n alla fine
+            System.out.printf("%-3s | %-25s | %-5s | %-5s | %-5s%n", "N.", "Nome", "Sets", "Reps", "Rec");
+            System.out.println("----------------------------------------------------------");
             for (int i = 0; i < addedExercises.size(); i++) {
                 WorkoutExerciseBean wb = addedExercises.get(i);
-                System.out.printf("%-3d | %-25s | %-5d | %-5d | %ds\n",
-                        (i+1),
+                // CORREZIONE: %n alla fine
+                System.out.printf("%-3d | %-25s | %-5d | %-5d | %ds%n",
+                        (i + 1),
                         truncate(wb.getExerciseName(), 25),
                         wb.getSets(),
                         wb.getReps(),
