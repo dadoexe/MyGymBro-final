@@ -203,9 +203,8 @@ public final class ApplicationController implements Controller {
 
     private void renderView(Object viewObject) {
         if (isGraphicMode) {
-            // LOGICA JAVAFX: Usiamo il cast esplicito (sicuro e pulito per Sonar)
-            if (viewObject instanceof GraphicView) {
-                GraphicView graphicView = (GraphicView) viewObject;
+            // CORREZIONE JAVA MODERN (Pattern Matching): Risolve il warning su instanceof
+            if (viewObject instanceof GraphicView graphicView) {
                 Parent root = graphicView.getRoot();
                 if (root != null && mainStage != null) {
                     Scene scene = new Scene(root);
@@ -214,9 +213,8 @@ public final class ApplicationController implements Controller {
                 }
             }
         } else {
-            // LOGICA CLI
-            if (viewObject instanceof CliView) {
-                CliView cliView = (CliView) viewObject;
+            // CORREZIONE JAVA MODERN (Pattern Matching) anche per la CLI
+            if (viewObject instanceof CliView cliView) {
                 cliView.run();
             } else {
                 logger.log(Level.WARNING, "Errore: La vista caricata non è una CLI valida: {0}", viewObject.getClass().getName());
