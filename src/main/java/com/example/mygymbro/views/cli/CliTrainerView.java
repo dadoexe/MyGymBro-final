@@ -104,7 +104,7 @@ public class CliTrainerView implements TrainerView, CliView {
             } else {
                 System.out.println("Indice non valido.");
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) { // <--- CAMBIATO DA 'e' A 'ignored'
             System.out.println("Inserisci un numero.");
         }
     }
@@ -125,17 +125,20 @@ public class CliTrainerView implements TrainerView, CliView {
         System.out.print("Numero > ");
 
         try {
-            int index = Integer.parseInt(scanner.nextLine()) - 1;
+            String line = scanner.nextLine();
+            // Aggiungi un controllo di sicurezza per input vuoti
+            if (line.trim().isEmpty()) return;
+
+            int index = Integer.parseInt(line) - 1;
             if (index == -1) return;
 
             if (index >= 0 && index < cachedPlans.size()) {
                 this.selectedPlan = cachedPlans.get(index);
-                listener.modifySelectedPlan();
-
+                if (listener != null) listener.modifySelectedPlan();
             } else {
                 System.out.println("Indice non valido.");
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) { // <--- CAMBIATO DA 'e' A 'ignored'
             System.out.println("Inserisci un numero.");
         }
     }
