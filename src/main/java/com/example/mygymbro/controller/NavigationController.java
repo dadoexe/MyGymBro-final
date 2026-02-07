@@ -12,9 +12,12 @@ import com.example.mygymbro.views.AthleteView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NavigationController implements Controller {
 
+    private static final Logger LOGGER = Logger.getLogger(NavigationController.class.getName());
     private static final String DEFAULT_EXERCISE_NAME = "Esercizio";
     private static final String DEFAULT_MUSCLE_GROUP = "Misto";
 
@@ -53,8 +56,8 @@ public class NavigationController implements Controller {
             // Aggiornamento View
             view.updateWorkoutList(planBeans);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento delle schede", e);
             view.updateWorkoutList(new ArrayList<>());
             view.showError("Impossibile caricare le schede.");
         }
@@ -92,7 +95,7 @@ public class NavigationController implements Controller {
             loadDashboardData();
 
         } catch (DAOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della scheda", e);
             view.showError("Errore cancellazione: " + e.getMessage());
         }
     }
