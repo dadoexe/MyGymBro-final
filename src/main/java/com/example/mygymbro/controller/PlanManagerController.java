@@ -122,13 +122,7 @@ public class PlanManagerController implements Controller {
 
     // --- ANNULLA ---
     public void handleCancel() {
-        UserBean currentUser = SessionManager.getInstance().getCurrentUser();
-
-        if (isTrainerWorkingOnClient(currentUser)) {
-            ApplicationController.getInstance().loadTrainerDashboard(this.targetAthlete);
-        } else {
-            ApplicationController.getInstance().loadHomeBasedOnRole();
-        }
+        navigateAfterSave();
     }
 
     // Metodo legacy per la CLI (se serve), lo mappiamo su handleSavePlan
@@ -264,7 +258,8 @@ public class PlanManagerController implements Controller {
         try {
             return MuscleGroup.valueOf(muscleGroupStr);
         } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.WARNING, "Gruppo muscolare non valido: " + muscleGroupStr, e);
+            String message = String.format("Gruppo muscolare non valido: %s", muscleGroupStr);
+            LOGGER.log(Level.WARNING, message, e);
             return MuscleGroup.CHEST;
         }
     }
