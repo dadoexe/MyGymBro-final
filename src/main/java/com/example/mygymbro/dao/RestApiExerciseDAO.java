@@ -13,12 +13,17 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RestApiExerciseDAO implements ExerciseDAO {
 
+    // 1. Aggiungiamo il Logger
+    private static final Logger logger = Logger.getLogger(RestApiExerciseDAO.class.getName());
 
     private static final String API_URL = "https://exercisedb.p.rapidapi.com/exercises?offset=0&limit=50";
-    private static final String API_KEY = "b5a76e4d57msh6edf21dcd3dd851p199802jsne8b14218cbd4";
+    // 2. Prendiamo la chiave dalle variabili d'ambiente (Sicuro!)
+    private static final String API_KEY = System.getenv("RAPID_API_KEY");
     private static final String API_HOST = "exercisedb.p.rapidapi.com";
 
     @Override
@@ -26,7 +31,9 @@ public class RestApiExerciseDAO implements ExerciseDAO {
         List<Exercise> modelList = new ArrayList<>();
 
         try {
-            System.out.println("VERIFICA URL: Sto chiamando questo indirizzo: " + API_URL);
+            // 3. Log invece di System.out
+            logger.log(Level.INFO, "VERIFICA URL: Sto chiamando questo indirizzo: {0}", API_URL);
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL))
                     .header("X-RapidAPI-Key", API_KEY)
@@ -38,31 +45,16 @@ public class RestApiExerciseDAO implements ExerciseDAO {
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                String jsonBody = response.body();
-                Gson gson = new Gson();
-                Type listType = new TypeToken<List<ApiExerciseDto>>() {}.getType();
-                List<ApiExerciseDto> apiList = gson.fromJson(jsonBody, listType);
-
-                if (apiList != null) {
-                    for (ApiExerciseDto dto : apiList) {
-                        int fakeId = (dto.id != null) ? dto.id.hashCode() : 0;
-                        String description = (dto.instructions != null) ? String.join(" ", dto.instructions) : "Nessuna descrizione";
-
-                        // --- MODIFICA INIZIO: Mappatura intelligente ---
-                        MuscleGroup mg = mapApiBodyPartToEnum(dto.bodyPart);
-                        // --- MODIFICA FINE ---
-
-                        Exercise model = new Exercise(fakeId, dto.name, description, mg);
-                        model.setGifUrl(dto.gifUrl);
-                        modelList.add(model);
-                    }
-                }
+                parseResponse(response.body(), modelList);
             } else {
-                System.err.println("Errore API: Codice " + response.statusCode());
+                // 4. Log errore invece di System.err
+                logger.log(Level.SEVERE, "Errore API nella findAll: Codice {0}", response.statusCode());
             }
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            // 5. Log eccezione invece di printStackTrace
+            logger.log(Level.SEVERE, "Eccezione durante la chiamata API findAll", e);
+            Thread.currentThread().interrupt(); // Buona pratica quando si cattura InterruptedException
         }
 
         return modelList;
@@ -72,22 +64,21 @@ public class RestApiExerciseDAO implements ExerciseDAO {
     public List<Exercise> search(String keyword) {
         List<Exercise> modelList = new ArrayList<>();
 
-        // Se la ricerca è vuota, restituiamo i "consigliati" (la findAll standard)
         if (keyword == null || keyword.trim().isEmpty()) {
             return findAll();
         }
 
-        // COSTRUIAMO L'URL DI RICERCA SPECIFICO
-
+        // Costruiamo l'URL
         String searchUrl = "https://exercisedb.p.rapidapi.com/exercises/name/" + keyword.trim().replace(" ", "%20") + "?limit=50";
 
         try {
-            System.out.println("RICERCA LIVE: " + searchUrl); // Debug
+            logger.log(Level.INFO, "RICERCA LIVE: {0}", searchUrl);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(searchUrl))
-                    .header("X-RapidAPI-Key", "b5a76e4d57msh6edf21dcd3dd851p199802jsne8b14218cbd4") // Usa la tua costante API_KEY
-                    .header("X-RapidAPI-Host", "exercisedb.p.rapidapi.com") // Usa la tua costante API_HOST
+                    // ⚠️ QUI C'ERA L'ERRORE: Ora usiamo le costanti sicure!
+                    .header("X-RapidAPI-Key", API_KEY)
+                    .header("X-RapidAPI-Host", API_HOST)
                     .method("GET", HttpRequest.BodyPublishers.noBody())
                     .build();
 
@@ -95,58 +86,53 @@ public class RestApiExerciseDAO implements ExerciseDAO {
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-
-
-                String jsonBody = response.body();
-                com.google.gson.Gson gson = new com.google.gson.Gson();
-                java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<ApiExerciseDto>>() {}.getType();
-                List<ApiExerciseDto> apiList = gson.fromJson(jsonBody, listType);
-
-                if (apiList != null) {
-                    for (ApiExerciseDto dto : apiList) {
-                        int fakeId = (dto.id != null) ? dto.id.hashCode() : 0;
-                        String description = (dto.instructions != null) ? String.join(" ", dto.instructions) : "Descrizione...";
-                        com.example.mygymbro.model.MuscleGroup mg = mapApiBodyPartToEnum(dto.bodyPart);
-                        modelList.add(new Exercise(fakeId, dto.name, description, mg));
-                    }
-                }
+                parseResponse(response.body(), modelList);
+            } else {
+                logger.log(Level.WARNING, "Errore API nella search: Codice {0}", response.statusCode());
             }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Eccezione durante la ricerca API", e);
         }
         return modelList;
     }
 
-    /**
-     * Metodo Helper per convertire le stringhe dell'API (es. "waist", "upper legs")
-     * nei nostri Enum Java.
-     */
-    private MuscleGroup mapApiBodyPartToEnum(String apiBodyPart) {
-        if (apiBodyPart == null) return MuscleGroup.CHEST; // Default
+    // Metodo helper per evitare duplicazione codice nel parsing
+    private void parseResponse(String jsonBody, List<Exercise> modelList) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<ApiExerciseDto>>() {}.getType();
+        List<ApiExerciseDto> apiList = gson.fromJson(jsonBody, listType);
 
-        // Normalizziamo la stringa (minuscolo) per il confronto
+        if (apiList != null) {
+            for (ApiExerciseDto dto : apiList) {
+                int fakeId = (dto.id != null) ? dto.id.hashCode() : 0;
+                String description = (dto.instructions != null) ? String.join(" ", dto.instructions) : "Descrizione non disponibile";
+                MuscleGroup mg = mapApiBodyPartToEnum(dto.bodyPart);
+
+                Exercise model = new Exercise(fakeId, dto.name, description, mg);
+                model.setGifUrl(dto.gifUrl);
+                modelList.add(model);
+            }
+        }
+    }
+
+    private MuscleGroup mapApiBodyPartToEnum(String apiBodyPart) {
+        if (apiBodyPart == null) return MuscleGroup.CHEST;
+
         switch (apiBodyPart.toLowerCase().trim()) {
             case "chest":           return MuscleGroup.CHEST;
             case "back":            return MuscleGroup.BACK;
             case "shoulders":       return MuscleGroup.SHOULDERS;
-
-            // Mappiamo le varie parti delle braccia su ARMS
             case "upper arms":
             case "lower arms":      return MuscleGroup.ARMS;
-
-            // Mappiamo le varie parti delle gambe su LEGS
             case "upper legs":
             case "lower legs":      return MuscleGroup.LEGS;
-
-            // Il famoso fix per "waist"
             case "waist":           return MuscleGroup.ABS;
-
             case "cardio":          return MuscleGroup.CARDIO;
-            case "neck":            return MuscleGroup.SHOULDERS; // O altro se preferisci
-
+            case "neck":            return MuscleGroup.SHOULDERS;
             default:
-                // Logghiamo solo se troviamo qualcosa di davvero nuovo
-                System.out.println("Gruppo muscolare sconosciuto: " + apiBodyPart + " -> Mappato su CHEST");
+                // Logghiamo l'avviso
+                logger.log(Level.WARNING, "Gruppo muscolare sconosciuto: {0} -> Mappato su CHEST", apiBodyPart);
                 return MuscleGroup.CHEST;
         }
     }

@@ -3,10 +3,13 @@ package com.example.mygymbro.utils; // Assicurati che il package sia giusto
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DBConnect {
 
-    // DATI ESATTI CHE HAI USATO NEL TEST FUNZIONANTE
+    private static final Logger logger = Logger.getLogger(DBConnect.class.getName());
+
     private static final String URL = "jdbc:mysql://localhost:3306/mygymbro";
     private static final String USER = "root";
     private static final String PASS = "";  // <--- IMPORTANTE: Vuota per XAMPP!
@@ -22,12 +25,14 @@ public class DBConnect {
                 Class.forName("com.mysql.cj.jdbc.Driver");
 
                 connection = DriverManager.getConnection(URL, USER, PASS);
-                System.out.println("CONNESSIONE DB STABILITA CON SUCCESSO!");
+                logger.log(Level.INFO, "Connessione DB stabilita con successo!");
             }
         } catch (SQLException | ClassNotFoundException e) {
-            System.err.println("ERRORE DI CONNESSIONE NEL DAO:");
-            e.printStackTrace(); // <--- Questo stamperà l'errore vero in console
-            return null;
+            // 4. USA IL LOGGER ANCHE PER GLI ERRORI (Level.SEVERE)
+            // Vecchio: System.err.println("ERRORE...");
+            // Vecchio: e.printStackTrace();
+            logger.log(Level.SEVERE, "Errore di connessione nel DAO", e);
+            return null; // O potresti voler rilanciare un'eccezione personalizzata
         }
         return connection;
     }
