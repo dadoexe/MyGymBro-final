@@ -1,6 +1,6 @@
 package com.example.mygymbro.dao;
 
-import com.example.mygymbro.exceptions.DAOException; // Import fondamentale
+import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.WorkoutPlan;
 import com.google.gson.Gson;
@@ -12,29 +12,39 @@ import java.util.List;
 
 public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
 
-    private static final String DATA_DIR = System.getProperty("user.home") + File.separator + "mygymbro_data" + File.separator + "plans";
+    private static final String JSON_EXT = ".json"; // Costante per evitare duplicati
+
+    // Costruiamo il percorso in modo sicuro per ogni sistema operativo
+    private static final String DATA_DIR_PATH = System.getProperty("user.home") + File.separator + "mygymbro_data" + File.separator + "plans";
+
     private final Gson gson;
+    private final File dataDir;
 
     public FileSystemWorkoutPlanDAO() {
         this.gson = new GsonBuilder().setPrettyPrinting().setDateFormat("yyyy-MM-dd").create();
-        File directory = new File(DATA_DIR);
-        if (!directory.exists()) {
-            directory.mkdirs();
+        this.dataDir = new File(DATA_DIR_PATH);
+
+        if (!dataDir.exists()) {
+            boolean created = dataDir.mkdirs();
+            if (!created) {
+                System.err.println("ATTENZIONE: Impossibile creare la cartella dati: " + DATA_DIR_PATH);
+            }
         }
     }
 
     @Override
     public void save(WorkoutPlan plan) throws DAOException {
         if (plan.getId() == 0) {
+            // Generiamo un ID semplice basato sul tempo (secondi)
             plan.setId((int) (System.currentTimeMillis() / 1000));
         }
 
-        File file = new File(DATA_DIR, plan.getId() + ".json");
+        // CORREZIONE 1: Uso la costante .json (era "_json")
+        File file = new File(dataDir, plan.getId() + JSON_EXT);
 
         try (FileWriter writer = new FileWriter(file)) {
             gson.toJson(plan, writer);
         } catch (IOException e) {
-            // CATTURIAMO l'errore tecnico (IOException) e lanciamo quello del progetto (DAOException)
             throw new DAOException("Impossibile salvare il file della scheda su disco", e);
         }
     }
@@ -47,39 +57,39 @@ public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
 
     @Override
     public void delete(int planId) throws DAOException {
-        File file = new File(DATA_DIR, planId + ".json");
-        if (file.exists()) {
-            if (!file.delete()) {
-                // Generiamo un errore fittizio per soddisfare il costruttore (Messaggio, Causa)
-                throw new DAOException("Impossibile eliminare il file: " + planId, new IOException("File.delete() ha restituito false"));
-            }
+        File file = new File(dataDir, planId + JSON_EXT);
+        if (file.exists() && !file.delete()) {
+            throw new DAOException("Impossibile eliminare il file: " + planId, new IOException("File.delete() ha restituito false"));
         }
     }
 
     @Override
     public List<WorkoutPlan> findByAthlete(Athlete athlete) throws DAOException {
         List<WorkoutPlan> result = new ArrayList<>();
-        File folder = new File(DATA_DIR);
 
-        File[] listOfFiles = folder.listFiles();
+        // Se la cartella non esiste o è vuota, ritorna lista vuota
+        if (!dataDir.exists()) return result;
 
-        if (listOfFiles != null) {
-            for (File file : listOfFiles) {
-                if (file.isFile() && file.getName().endsWith(".json")) {
-                    try (FileReader reader = new FileReader(file)) {
-                        WorkoutPlan plan = gson.fromJson(reader, WorkoutPlan.class);
+        File[] listOfFiles = dataDir.listFiles();
+        if (listOfFiles == null) return result;
 
-                        // Filtro per atleta
-                        if (plan.getAthlete() != null && plan.getAthlete().getId() == athlete.getId()) {
-                            result.add(plan);
-                        } else if (plan.getAthleteId() == athlete.getId()) {
-                            result.add(plan);
-                        }
+        for (File file : listOfFiles) {
+            if (file.isFile() && file.getName().endsWith(JSON_EXT)) {
+                try (FileReader reader = new FileReader(file)) {
+                    WorkoutPlan plan = gson.fromJson(reader, WorkoutPlan.class);
 
-                    } catch (IOException e) {
-                        // Se un file è corrotto, lanciamo l'errore DAO
-                        throw new DAOException("Errore nella lettura del file: " + file.getName(), e);
+                    // CORREZIONE 2: Logica unificata con OR (||)
+                    // Controlliamo se l'atleta corrisponde (tramite oggetto O tramite ID se presente)
+                    boolean matchByObject = plan.getAthlete() != null && plan.getAthlete().getId() == athlete.getId();
+
+                    boolean matchById = plan.getAthleteId() == athlete.getId();
+
+                    if (matchByObject) {
+                        result.add(plan);
                     }
+
+                } catch (IOException e) {
+                    throw new DAOException("Errore nella lettura del file: " + file.getName(), e);
                 }
             }
         }
