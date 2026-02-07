@@ -28,7 +28,7 @@ public class CliViewFactory implements ViewFactory {
     @Override
     public WorkoutPreviewView createWorkoutPreviewView() {
         // Se non hai ancora creato CliWorkoutPreviewView, per ora ritorna null
-        // return new CliWorkoutPreviewView();
+
         return null;
     }
 
