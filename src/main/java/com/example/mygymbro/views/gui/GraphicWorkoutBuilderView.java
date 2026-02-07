@@ -24,7 +24,9 @@ public class GraphicWorkoutBuilderView implements WorkoutBuilderView, GraphicVie
     @FXML private TextField txtPlanName;
     @FXML private TextArea txtComment;
     @FXML private ComboBox<ExerciseBean> comboExercises; // Il menu a tendina
-    @FXML private TextField txtSets, txtReps, txtRest;
+    @FXML private TextField txtSets;
+    @FXML private TextField txtReps;
+    @FXML private TextField txtRest;
     @FXML private TableView<WorkoutExerciseBean> tableExercises;
     @FXML private TextField txtSearchExercise;
     @FXML private Label lblTotalTime;
@@ -90,24 +92,36 @@ public class GraphicWorkoutBuilderView implements WorkoutBuilderView, GraphicVie
             @Override
             public TableCell<WorkoutExerciseBean, Void> call(final TableColumn<WorkoutExerciseBean, Void> param) {
                 return new TableCell<>() {
+                    // Creiamo il bottone ma NON lo configuriamo qui (via l'initializer block!)
                     private final Button btn = new Button("X");
-                    {
-                        btn.setStyle("-fx-background-color: #FF5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-                        btn.setOnAction(event -> {
-                            WorkoutExerciseBean exercise = getTableView().getItems().get(getIndex());
-                            if (listener != null) {
-                                listener.removeExerciseFromPlan(exercise);
-                            }
-                        });
-                    }
+
                     @Override
                     public void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        setGraphic(empty ? null : btn);
+                        if (empty) {
+                            setGraphic(null);
+                        } else {
+                            // CONFIGURIAMO QUI (Soluzione pulita e sicura)
+                            btn.setStyle("-fx-background-color: #FF5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+
+                            // L'azione va definita qui per essere sicuri di prendere l'indice aggiornato
+                            btn.setOnAction(event -> {
+                                // Controllo di sicurezza sull'indice
+                                if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
+                                    WorkoutExerciseBean exercise = getTableView().getItems().get(getIndex());
+                                    if (listener != null) {
+                                        listener.removeExerciseFromPlan(exercise);
+                                    }
+                                }
+                            });
+
+                            setGraphic(btn);
+                        }
                     }
                 };
             }
         };
+
         colDelete.setCellFactory(cellFactory);
     }
 
@@ -148,7 +162,7 @@ public class GraphicWorkoutBuilderView implements WorkoutBuilderView, GraphicVie
             row.setReps(reps);
             row.setRestTime(rest);
 
-            // Passiamo al Controller che calcolerà il tempo e aggiornerà la lista
+            // Passiamo al Controller
             if (listener != null) {
                 listener.addExerciseToPlan(row);
             }
@@ -159,7 +173,8 @@ public class GraphicWorkoutBuilderView implements WorkoutBuilderView, GraphicVie
             txtRest.clear();
 
         } catch (NumberFormatException e) {
-            showError("Inserisci numeri validi per Sets, Reps e Rest.");
+            // CORREZIONE: Usiamo 'e' per soddisfare SonarCloud e dare info utili
+            showError("Inserisci numeri validi per Sets, Reps e Rest. (" + e.getMessage() + ")");
         }
     }
 
