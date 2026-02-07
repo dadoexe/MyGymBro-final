@@ -1,7 +1,6 @@
 package com.example.mygymbro.views;
 
 import com.example.mygymbro.bean.AthleteBean;
-import com.example.mygymbro.controller.LoginController;
 import com.example.mygymbro.bean.WorkoutPlanBean;
 import com.example.mygymbro.controller.TrainerController;
 

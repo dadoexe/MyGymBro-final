@@ -18,7 +18,7 @@ public class InMemoryUserDAO implements UserDAO {
         demoUser.setId(1);
         demoUser.setUsername("demo");
         demoUser.setPassword("demo");
-        demoUser.setName("Mario");
+        demoUser.setNome("Mario");
         demoUser.setCognome("Rossi");
         demoUser.setEmail("demo@mygymbro.it");
         ramDB.add(demoUser);

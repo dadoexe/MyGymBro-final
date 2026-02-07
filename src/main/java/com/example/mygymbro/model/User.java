@@ -60,9 +60,6 @@ public class User { // <--- ABSTRACT!
         this.password = password;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public void setCognome(String cognome) {
         this.cognome = cognome;
