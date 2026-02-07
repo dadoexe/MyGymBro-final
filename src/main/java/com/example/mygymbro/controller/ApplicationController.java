@@ -1,26 +1,36 @@
 package com.example.mygymbro.controller;
 
-
+import com.example.mygymbro.bean.AthleteBean;
 import com.example.mygymbro.bean.UserBean;
 import com.example.mygymbro.bean.WorkoutPlanBean;
 import com.example.mygymbro.views.*;
+import com.example.mygymbro.views.cli.CliView;
 import com.example.mygymbro.views.cli.CliViewFactory;
+import com.example.mygymbro.views.gui.GraphicView;
 import com.example.mygymbro.views.gui.GraphicViewFactory;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public final class ApplicationController implements Controller {//singleton
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-    //static variable reference of istance
+public final class ApplicationController implements Controller {
+
+    // Logger: Fondamentale per SonarCloud (sostituisce System.out/err)
+    private static final Logger logger = Logger.getLogger(ApplicationController.class.getName());
+
     private static ApplicationController instance = null;
-    boolean isGraphicMode; // O false se lanci da terminale
 
-    private ViewFactory viewFactory; // LA NOSTRA NUOVA FACTORY!
-    private Stage mainStage;         // Usato SOLO in modalità grafica
+    // CORREZIONE: Deve essere private
+    private boolean isGraphicMode;
 
-    //private contructor restricted to this class
+    private ViewFactory viewFactory;
+    private Stage mainStage;
+    private Controller currentController;
+
     private ApplicationController() {
+        // Costruttore privato
     }
 
     public static synchronized ApplicationController getInstance() {
@@ -28,17 +38,12 @@ public final class ApplicationController implements Controller {//singleton
             instance = new ApplicationController();
         }
         return instance;
-
     }
-
-    // --- 2. GESTIONE DEL CONTROLLER ATTUALE ---
-    private Controller currentController; // L'interfaccia generica che abbiamo creato
 
     public void configure(boolean isGraphic, Stage stage) {
         this.isGraphicMode = isGraphic;
-        this.mainStage = stage; // Sarà null se siamo in CLI, ma va bene!
+        this.mainStage = stage; // Sarà null in CLI, ok.
 
-        // Inizializza la Factory corretta
         if (isGraphic) {
             this.viewFactory = new GraphicViewFactory();
         } else {
@@ -46,49 +51,22 @@ public final class ApplicationController implements Controller {//singleton
         }
     }
 
-    // Avvio dell'applicazione
     public void start() {
-        loadLogin(); // Carica la prima schermata
+        loadLogin();
     }
 
-    //METODI DI NAVIGAZIONE
+    // --- METODI DI NAVIGAZIONE ---
+
     public void loadLogin() {
-        if (currentController != null) currentController.dispose();
+        disposeCurrentController();
 
-        // 1. CHIEDIAMO ALLA FACTORY (Polimorfismo)
-        // Se siamo in GUI, ci dà GraphicLoginView. Se siamo in CLI, ci dà CliLoginView.
         LoginView view = viewFactory.createLoginView();
-
-        // 2. SETUP CONTROLLER (Identico per entrambi)
         LoginController controller = new LoginController(view);
+
         view.setListener(controller);
         this.currentController = controller;
 
-        // 3. MOSTRARE LA VISTA (Qui dobbiamo gestire la differenza di "contenitore")
         renderView(view);
-    }
-
-    private void renderView(Object viewObject) {
-        if (isGraphicMode) {
-            // --- LOGICA JAVAFX (Resta uguale) ---
-            if (viewObject instanceof com.example.mygymbro.views.gui.GraphicView) {
-                Parent root = ((com.example.mygymbro.views.gui.GraphicView) viewObject).getRoot();
-                if (root != null) {
-                    Scene scene = new Scene(root);
-                    mainStage.setScene(scene);
-                    mainStage.show();
-                }
-            }
-        } else {
-            // --- LOGICA CLI (CORRETTA) ---
-            // Controlliamo se è una vista CLI valida
-            if (viewObject instanceof com.example.mygymbro.views.cli.CliView) {
-                // Facciamo il cast a CliView e chiamiamo run()
-                ((com.example.mygymbro.views.cli.CliView) viewObject).run();
-            } else {
-                System.err.println("Errore: La vista caricata non è una CLI valida.");
-            }
-        }
     }
 
     public void loadHomeBasedOnRole() {
@@ -100,14 +78,19 @@ public final class ApplicationController implements Controller {//singleton
         }
 
         if ("TRAINER".equals(user.getRole())) {
-            loadTrainerDashboard(); // <--- Crea questo metodo!
+            loadTrainerDashboard(null);
         } else {
-            loadAthleteDashboard(); // <--- Questo è il vecchio loadHome() rinominato
+            loadAthleteDashboard();
         }
     }
 
-    public void loadTrainerDashboard(com.example.mygymbro.bean.AthleteBean preSelectedAthlete) {
-        if (currentController != null) currentController.dispose();
+    // Overload per compatibilità
+    public void loadTrainerDashboard() {
+        loadTrainerDashboard(null);
+    }
+
+    public void loadTrainerDashboard(AthleteBean preSelectedAthlete) {
+        disposeCurrentController();
 
         TrainerView view = viewFactory.createTrainerView();
         if (view == null) return;
@@ -118,7 +101,6 @@ public final class ApplicationController implements Controller {//singleton
 
         controller.loadDashboardData();
 
-        // SE AVEVAMO UN CLIENTE SELEZIONATO, RIPRISTINALO!
         if (preSelectedAthlete != null) {
             view.setSelectedAthlete(preSelectedAthlete);
         }
@@ -126,54 +108,44 @@ public final class ApplicationController implements Controller {//singleton
         renderView(view);
     }
 
-    // Overload per compatibilità (chiama quello sopra con null)
-    public void loadTrainerDashboard() {
-        loadTrainerDashboard(null);
-    }
-
     public void loadAthleteDashboard() {
-        // 1. Pulizia del controller precedente
-        if (currentController != null) {
-            currentController.dispose();
-        }
+        disposeCurrentController();
 
-        // 2. CREAZIONE VISTA TRAMITE FACTORY (Il pezzo che mancava!)
-        // La factory deciderà se creare GraphicAthleteView o CliAthleteView
         AthleteView view = viewFactory.createAthleteView();
-
-        // Controllo di sicurezza
         if (view == null) {
-            System.err.println("ERRORE CRITICO: La factory ha restituito una view NULL per loadHome!");
+            logger.log(Level.SEVERE, "ERRORE CRITICO: La factory ha restituito una view NULL per loadAthleteDashboard!");
             return;
         }
 
-
-        // 3. Setup del Controller
         NavigationController controller = new NavigationController(view);
         view.setListener(controller);
         this.currentController = controller;
 
-        // 4. Caricamento dati iniziali (Dashboard)
         controller.loadDashboardData();
-
-        // 5. Mostra a video (Render)
         renderView(view);
     }
 
+    // Overload generico
+    public void loadWorkoutBuilder() {
+        loadWorkoutBuilder(null, null);
+    }
 
-    // VERSIONE AGGIORNATA: Accetta anche l'atleta proprietario (owner)
-    public void loadWorkoutBuilder(WorkoutPlanBean planToEdit, com.example.mygymbro.bean.AthleteBean owner) {
+    public void loadWorkoutBuilderForClient(AthleteBean client) {
+        // Riusiamo la logica centrale passando il cliente come owner e nessun piano da editare
+        loadWorkoutBuilder(null, client);
+    }
+
+    /**
+     * Metodo centrale per caricare il WorkoutBuilder.
+     * Gestisce sia la modifica (planToEdit != null) che la creazione per un cliente (owner != null).
+     */
+    public void loadWorkoutBuilder(WorkoutPlanBean planToEdit, AthleteBean owner) {
         try {
-            // 1. Pulizia
-            if (currentController != null) {
-                currentController.dispose();
-            }
+            disposeCurrentController();
 
-            // 2. CREAZIONE VISTA
             WorkoutBuilderView view = viewFactory.createWorkoutBuilderView();
             if (view == null) return;
 
-            // 3. Setup Controller
             PlanManagerController controller;
             if (planToEdit == null) {
                 controller = new PlanManagerController(view);
@@ -181,113 +153,99 @@ public final class ApplicationController implements Controller {//singleton
                 controller = new PlanManagerController(view, planToEdit);
             }
 
-            // --- FIX CRUCIALE: Se abbiamo un proprietario (es. Mario), lo passiamo al controller ---
             if (owner != null) {
                 controller.setTargetAthlete(owner);
             }
-            // --------------------------------------------------------------------------------------
 
             view.setListener(controller);
             this.currentController = controller;
 
-            // 4. Render
             renderView(view);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Errore nel caricamento del WorkoutBuilder: " + e.getMessage());
+            // CORREZIONE: Log dell'eccezione invece di printStackTrace
+            logger.log(Level.SEVERE, "Errore nel caricamento del WorkoutBuilder", e);
         }
     }
-
-    // Overload per mantenere compatibilità con chi non passa l'atleta (es. tasto "Nuova Scheda" generico)
-    public void loadWorkoutBuilder() {
-        loadWorkoutBuilder(null, null);
-    }
-
-    public void loadWorkoutBuilderForClient(com.example.mygymbro.bean.AthleteBean client) {
-        try {
-            if (currentController != null) currentController.dispose();
-
-            // 1. Crea la View
-            WorkoutBuilderView view = viewFactory.createWorkoutBuilderView();
-            if (view == null) return;
-
-            // 2. Crea il Controller in modalità "NUOVA SCHEDA"
-            PlanManagerController controller = new PlanManagerController(view);
-
-            // 3. SETTA IL TARGET: Diciamo al controller che il proprietario sarà il cliente!
-            controller.setTargetAthlete(client);
-
-            view.setListener(controller);
-            this.currentController = controller;
-            renderView(view);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Errore loadWorkoutBuilderForClient: " + e.getMessage());
-        }
-    }
-    // ... altri metodi ...
 
     public void loadWorkoutPreview(WorkoutPlanBean plan) {
-        if (currentController != null) currentController.dispose();
+        disposeCurrentController();
 
-        // 1. Crea la View (Dovrai aggiungere createWorkoutPreviewView alla Factory!)
         WorkoutPreviewView view = viewFactory.createWorkoutPreviewView();
-
         if (view == null) return;
 
-        // 2. Crea Controller
         PreviewController controller = new PreviewController(view, plan);
         view.setListener(controller);
         this.currentController = controller;
 
         renderView(view);
     }
+
     public void loadLiveSession(WorkoutPlanBean planToExecute) {
-        if (currentController != null) currentController.dispose();
+        disposeCurrentController();
 
-        // 1. Crea View (GUI o CLI tramite factory)
         LiveSessionView view = viewFactory.createLiveSessionView();
-
         if (view == null) {
-            System.err.println("ERRORE: Factory LiveSessionView ha restituito null");
+            logger.log(Level.SEVERE, "ERRORE: Factory LiveSessionView ha restituito null");
             return;
         }
 
-        // 2. Crea Controller
         LiveSessionController controller = new LiveSessionController(view, planToExecute);
         view.setListener(controller);
         this.currentController = controller;
 
-        // 3. Render
         renderView(view);
         controller.startSession();
     }
 
     public void logout() {
-        // Pulisco la sessione
         SessionManager.getInstance().logout();
-        // Torno al login
         loadLogin();
+    }
+
+    // --- METODI DI SUPPORTO ---
+
+    private void disposeCurrentController() {
+        if (currentController != null) {
+            currentController.dispose();
+            currentController = null; // Evita memory leaks
+        }
+    }
+
+    private void renderView(Object viewObject) {
+        if (isGraphicMode) {
+            // --- LOGICA JAVAFX ---
+            if (viewObject instanceof GraphicView graphicView) {
+                // Java 14+ pattern matching (se non va, usa il cast classico)
+                // Se usi Java 8/11 usa: if (viewObject instanceof GraphicView) { GraphicView graphicView = (GraphicView) viewObject; ... }
+
+                Parent root = graphicView.getRoot();
+                if (root != null && mainStage != null) {
+                    Scene scene = new Scene(root);
+                    mainStage.setScene(scene);
+                    mainStage.show();
+                }
+            }
+        } else {
+            // --- LOGICA CLI ---
+            if (viewObject instanceof CliView cliView) {
+                cliView.run();
+            } else {
+                logger.log(Level.SEVERE, "Errore: La vista caricata non è una CLI valida: {0}", viewObject.getClass().getName());
+            }
+        }
     }
 
     @Override
     public void dispose() {
-        // 1. Chiudo il controller della schermata attuale (se esiste)
-        // Questo è fondamentale se quel controller ha connessioni aperte o thread attivi!
-        if (currentController != null) {
-            currentController.dispose();
-        }
-
-        // 2. Pulisco la sessione (Logout forzato)
+        disposeCurrentController();
         SessionManager.getInstance().logout();
 
-        // 3. Chiudo la finestra principale (se è ancora aperta)
         if (mainStage != null) {
             mainStage.close();
         }
 
+        // Questo è accettabile nel Main Controller
         System.exit(0);
     }
 }
