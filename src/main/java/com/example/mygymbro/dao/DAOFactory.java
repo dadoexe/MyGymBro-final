@@ -8,18 +8,22 @@ public class DAOFactory {
 
     private static boolean isDemoMode = false;
 
-    // CORREZIONE 1: Rinominata in camelCase perché non è 'final'
-    public static boolean confUseFileSystem = false;
+    // CORREZIONE: Ora è PRIVATE (SonarCloud è felice)
+    private static boolean confUseFileSystem = true;
 
-    // Costruttore privato per nascondere quello pubblico implicito (Regola Sonar)
     private DAOFactory() {
         throw new IllegalStateException("Utility class");
     }
 
     public static void setDemoMode(boolean active) {
         isDemoMode = active;
-        // CORREZIONE 2: Logger invece di System.out
         logger.info(() -> "DAOFactory: Modalità DEMO (RAM) impostata su " + active);
+    }
+
+    // NUOVO METODO: Usa questo per attivare il FileSystem da fuori!
+    public static void setUseFileSystem(boolean active) {
+        confUseFileSystem = active;
+        logger.info(() -> "DAOFactory: Modalità FileSystem impostata su " + active);
     }
 
     public static UserDAO getUserDAO() {
@@ -34,8 +38,7 @@ public class DAOFactory {
         if (isDemoMode) {
             return new InMemoryPersonalTrainerDAO();
         } else {
-            // Se non hai implementato MySQLPersonalTrainerDAO, ritorna null o gestiscilo
-            return null;
+            return null; // O MySQLPersonalTrainerDAO se esiste
         }
     }
 
@@ -45,7 +48,7 @@ public class DAOFactory {
             return new InMemoryWorkoutPlanDAO();
         }
 
-        // 2. Se siamo in FULL MODE, scegliamo la persistenza
+        // 2. Se siamo in FULL MODE, controlliamo la flag privata
         if (confUseFileSystem) {
             logger.info("DAOFactory: Utilizzo FileSystemDAO");
             return new FileSystemWorkoutPlanDAO();
