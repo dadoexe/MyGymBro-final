@@ -4,14 +4,17 @@ import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.WorkoutPlan;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class InMemoryWorkoutPlanDAO implements WorkoutPlanDAO {
 
-    private static List<WorkoutPlan> ramPlans = new ArrayList<>();
+    // 1. LOGGER: Sostituisce System.out (Security/Reliability)
+    private static final Logger logger = Logger.getLogger(InMemoryWorkoutPlanDAO.class.getName());
+
+    private static final List<WorkoutPlan> ramPlans = new ArrayList<>();
 
     @Override
     public void save(WorkoutPlan plan) throws DAOException {
@@ -24,27 +27,27 @@ public class InMemoryWorkoutPlanDAO implements WorkoutPlanDAO {
             delete(plan.getId());
         }
 
-        // Salviamo la nuova versione
         ramPlans.add(plan);
-        System.out.println("[RAM DB] Piano salvato: " + plan.getName() + " (ID: " + plan.getId() + ")");
+        // CORREZIONE: Uso del logger invece di System.out
+        logger.log(Level.INFO, "[RAM DB] Piano salvato: {0} (ID: {1})", new Object[]{plan.getName(), plan.getId()});
     }
 
     @Override
     public List<WorkoutPlan> findByAthlete(Athlete athlete) throws DAOException {
         if (athlete == null) return new ArrayList<>();
 
+        // CORREZIONE: .toList() è il modo moderno (Java 16+) per chiudere gli stream
+        // Se usi Java 8/11, usa .collect(java.util.stream.Collectors.toList())
         return ramPlans.stream()
-                // FILTRO SICURO: Controlliamo che la scheda abbia un atleta e che l'ID corrisponda
                 .filter(p -> p.getAthlete() != null && p.getAthlete().getId() == athlete.getId())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public void delete(int id) throws DAOException {
-        // Rimuove la scheda se l'ID corrisponde
         boolean removed = ramPlans.removeIf(p -> p.getId() == id);
         if (removed) {
-            System.out.println("[RAM DB] Piano eliminato: ID " + id);
+            logger.log(Level.INFO, "[RAM DB] Piano eliminato: ID {0}", id);
         }
     }
 

@@ -13,7 +13,7 @@ public class InMemoryPersonalTrainerDAO implements PersonalTrainerDAO {
         List<Athlete> athletes = new ArrayList<>();
 
         // Scorre la lista statica condivisa in InMemoryUserDAO
-        for (User u : InMemoryUserDAO.ramDB) {
+        for (User u : InMemoryUserDAO.getRamDB()) {
             // CORREZIONE: Pattern Matching (Java 14+)
             // Invece di fare il check e poi il cast ((Athlete) u), facciamo tutto insieme.
             if (u instanceof Athlete athlete) {

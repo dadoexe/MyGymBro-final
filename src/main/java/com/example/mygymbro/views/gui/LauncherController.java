@@ -8,7 +8,13 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class LauncherController {
+
+    // 1. LOGGER: Sostituisce System.out
+    private static final Logger logger = Logger.getLogger(LauncherController.class.getName());
 
     @FXML private Button btnDemo;
     private boolean isDemoMode = false;
@@ -17,7 +23,8 @@ public class LauncherController {
     public void startGui(ActionEvent event) {
         // 1. Configura l'app in modalità GRAFICA
         DAOFactory.setDemoMode(isDemoMode);
-        Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         ApplicationController.getInstance().configure(true, stage);
 
         // 2. Avvia
@@ -26,12 +33,16 @@ public class LauncherController {
 
     @FXML
     public void startCli(ActionEvent event) {
-        // 1. Chiudi la finestra del launcher (la CLI sta nella console!)
-        Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+        // 1. Chiudi la finestra del launcher
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.close();
 
         // 2. Configura l'app in modalità TESTUALE
-        System.out.println(">>> AVVIO CLI IN CORSO... GUARDA LA CONSOLE! <<<");
+        DAOFactory.setDemoMode(isDemoMode);
+
+        // CORREZIONE: Uso del logger invece di System.out
+        logger.log(Level.INFO, ">>> AVVIO CLI IN CORSO... GUARDA LA CONSOLE! <<<");
+
         ApplicationController.getInstance().configure(false, null);
 
         // 3. Avvia
@@ -41,8 +52,10 @@ public class LauncherController {
     @FXML
     public void toggleDemo(ActionEvent event) {
         isDemoMode = !isDemoMode;
-        // Qui dovresti avere un metodo statico nella tua Factory per attivare i dati finti
-        // DAOFactory.setDemoMode(isDemoMode);
+
+        // CORREZIONE: Chiamata al metodo statico nella Factory (se esistente)
+        // Se non hai ancora implementato setDemoMode in DAOFactory, puoi farlo ora.
+        DAOFactory.setDemoMode(isDemoMode);
 
         if (isDemoMode) {
             btnDemo.setText("DEMO MODE: ON");
