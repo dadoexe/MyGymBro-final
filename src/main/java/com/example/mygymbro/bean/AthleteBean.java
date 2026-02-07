@@ -4,7 +4,7 @@ public class AthleteBean extends UserBean {
     private float weight; // O String se vuoi validare dopo
     private float height;
      // Aggiunto per chiarezza
-    public AthleteBean() {}
+
 
     public float getWeight() { return weight; }
     public void setWeight(float weight) { this.weight = weight; }
