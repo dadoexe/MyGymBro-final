@@ -74,7 +74,8 @@ public class GraphicAthleteView implements AthleteView, GraphicView {
                 if (workoutPlans != null && !workoutPlans.isEmpty()) {
                     WorkoutPlanBean last = workoutPlans.get(workoutPlans.size() - 1);
                     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                    // Controllo null sulla data per evitare crash
+
+                    // Controllo null sulla data
                     String dateStr = (last.getCreationDate() != null) ? sdf.format(last.getCreationDate()) : "Recente";
                     lblLastActivity.setText(dateStr);
                 } else {
