@@ -9,7 +9,7 @@ public class DAOFactory {
     private static boolean isDemoMode = false;
 
     // CORREZIONE: Ora è PRIVATE (SonarCloud è felice)
-    private static boolean confUseFileSystem = true;
+    private static boolean confUseFileSystem = false;
 
     private DAOFactory() {
         throw new IllegalStateException("Utility class");
