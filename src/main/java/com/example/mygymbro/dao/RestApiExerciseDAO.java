@@ -142,7 +142,7 @@ public class RestApiExerciseDAO implements ExerciseDAO {
             case "cardio":
                 return MuscleGroup.CARDIO;
             default:
-                logger.log(Level.WARNING, "Gruppo muscolare sconosciuto: {0} -> Mappato su CHEST", apiBodyPart);
+                logger.log(Level.WARNING, "Gruppo muscolare sconosciuto: {0} -> Mappato su CHEST ", apiBodyPart);
                 return MuscleGroup.CHEST;
         }
     }
