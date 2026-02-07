@@ -24,9 +24,16 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
         if (listener != null) listener.startSession();
 
         while (sessionRunning) {
-            try { Thread.sleep(200); } catch (Exception e) {}
-        }
-    }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                // CORREZIONE: Non lasciare il catch vuoto!
+                // 1. Ripristina lo stato di interruzione
+                Thread.currentThread().interrupt();
+                // 2. Esci dal ciclo se il thread viene interrotto
+                break;
+            }
+    }}
 
     @Override
     public void showExercise(WorkoutExerciseBean exercise, int currentSet, int totalSets) {
