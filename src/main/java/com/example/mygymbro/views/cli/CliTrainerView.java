@@ -104,8 +104,10 @@ public class CliTrainerView implements TrainerView, CliView {
             } else {
                 System.out.println("Indice non valido.");
             }
-        } catch (NumberFormatException ignored) { // <--- CAMBIATO DA 'e' A 'ignored'
-            System.out.println("Inserisci un numero.");
+        } catch (NumberFormatException e) {
+            // CORREZIONE: Usiamo 'e' stampando il messaggio.
+            // SonarCloud ora è felice perché la variabile è usata.
+            System.out.println("Inserisci un numero valido. Dettaglio: " + e.getMessage());
         }
     }
 
@@ -138,8 +140,9 @@ public class CliTrainerView implements TrainerView, CliView {
             } else {
                 System.out.println("Indice non valido.");
             }
-        } catch (NumberFormatException ignored) { // <--- CAMBIATO DA 'e' A 'ignored'
-            System.out.println("Inserisci un numero.");
+        } catch (NumberFormatException e) {
+            // CORREZIONE: Anche qui, usiamo 'e'.
+            System.out.println("Inserisci un numero valido. Dettaglio: " + e.getMessage());
         }
     }
 
