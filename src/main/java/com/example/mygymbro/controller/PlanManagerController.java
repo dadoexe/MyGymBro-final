@@ -4,6 +4,7 @@ import com.example.mygymbro.bean.*;
 import com.example.mygymbro.dao.DAOFactory;
 import com.example.mygymbro.dao.ExerciseDAO;
 import com.example.mygymbro.dao.WorkoutPlanDAO;
+import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.*;
 import com.example.mygymbro.views.WorkoutBuilderView;
 
@@ -11,9 +12,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PlanManagerController implements Controller {
+
+    private static final Logger LOGGER = Logger.getLogger(PlanManagerController.class.getName());
+    private static final String TRAINER_ROLE = "TRAINER";
+    private static final String DEFAULT_MUSCLE_GROUP = "UNKNOWN";
+    private static final int SECONDS_PER_REP = 4;
+    private static final int TRANSITION_TIME = 60;
 
     private WorkoutBuilderView view;
     private WorkoutPlanDAO workoutPlanDAO;
@@ -25,9 +33,9 @@ public class PlanManagerController implements Controller {
     public PlanManagerController(WorkoutBuilderView view) {
         this.view = view;
         this.workoutPlanDAO = DAOFactory.getWorkoutPlanDAO();
-        this.exerciseDAO = DAOFactory.getExerciseDAO(); // Usa la factory!
+        this.exerciseDAO = DAOFactory.getExerciseDAO();
         this.currentPlan = new WorkoutPlanBean();
-        this.currentPlan.setExerciseList(new ArrayList<>()); // Inizializza la lista vuota
+        this.currentPlan.setExerciseList(new ArrayList<>());
         loadAvailableExercises();
     }
 
@@ -46,66 +54,79 @@ public class PlanManagerController implements Controller {
     }
 
     // --- LOGICA DI SALVATAGGIO (UNICA E CORRETTA) ---
-    // Questo metodo viene chiamato quando premi "SALVA" nella grafica
     public void handleSavePlan() {
         try {
-            // 1. Recupera dati
             WorkoutPlanBean formData = view.getWorkoutPlanBean();
 
-            // 2. Aggiorna bean corrente
-            currentPlan.setName(formData.getName());
-            currentPlan.setComment(formData.getComment());
-            currentPlan.setExerciseList(formData.getExerciseList());
+            updateCurrentPlan(formData);
 
-            // 3. Validazione
-            if (currentPlan.getName() == null || currentPlan.getName().trim().isEmpty()) {
-                view.showError("Devi dare un nome alla scheda!");
-                return;
-            }
-            if (currentPlan.getExerciseList() == null || currentPlan.getExerciseList().isEmpty()) {
-                view.showError("La scheda deve avere almeno un esercizio.");
+            if (!validatePlan()) {
                 return;
             }
 
-            // 4. Conversione e Salvataggio
-            WorkoutPlan planModel = toModelWorkoutPlan(currentPlan);
-
-            if (currentPlan.getId() > 0) {
-                workoutPlanDAO.update(planModel);
-            } else {
-                workoutPlanDAO.save(planModel);
-            }
+            savePlanToDatabase();
 
             view.showSuccess("Scheda salvata correttamente!");
+            navigateAfterSave();
 
-            // --- 5. NAVIGAZIONE INTELLIGENTE (Qui sta il trucco!) ---
-            UserBean currentUser = SessionManager.getInstance().getCurrentUser();
-
-            if ("TRAINER".equals(currentUser.getRole()) && this.targetAthlete != null) {
-                // SE SONO TRAINER: Torno alla dashboard FORZANDO la selezione del cliente
-                ApplicationController.getInstance().loadTrainerDashboard(this.targetAthlete);
-            } else {
-                // SE SONO ATLETA (o trainer senza target specifico): Comportamento standard
-                ApplicationController.getInstance().loadHomeBasedOnRole();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il salvataggio della scheda", e);
             view.showError("Errore durante il salvataggio: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            LOGGER.log(Level.WARNING, "Stato non valido durante il salvataggio", e);
+            view.showError("Errore: " + e.getMessage());
         }
+    }
+
+    private void updateCurrentPlan(WorkoutPlanBean formData) {
+        currentPlan.setName(formData.getName());
+        currentPlan.setComment(formData.getComment());
+        currentPlan.setExerciseList(formData.getExerciseList());
+    }
+
+    private boolean validatePlan() {
+        if (currentPlan.getName() == null || currentPlan.getName().trim().isEmpty()) {
+            view.showError("Devi dare un nome alla scheda!");
+            return false;
+        }
+        if (currentPlan.getExerciseList() == null || currentPlan.getExerciseList().isEmpty()) {
+            view.showError("La scheda deve avere almeno un esercizio.");
+            return false;
+        }
+        return true;
+    }
+
+    private void savePlanToDatabase() throws DAOException {
+        WorkoutPlan planModel = toModelWorkoutPlan(currentPlan);
+
+        if (currentPlan.getId() > 0) {
+            workoutPlanDAO.update(planModel);
+        } else {
+            workoutPlanDAO.save(planModel);
+        }
+    }
+
+    private void navigateAfterSave() {
+        UserBean currentUser = SessionManager.getInstance().getCurrentUser();
+
+        if (isTrainerWorkingOnClient(currentUser)) {
+            ApplicationController.getInstance().loadTrainerDashboard(this.targetAthlete);
+        } else {
+            ApplicationController.getInstance().loadHomeBasedOnRole();
+        }
+    }
+
+    private boolean isTrainerWorkingOnClient(UserBean user) {
+        return TRAINER_ROLE.equals(user.getRole()) && this.targetAthlete != null;
     }
 
     // --- ANNULLA ---
     public void handleCancel() {
-
         UserBean currentUser = SessionManager.getInstance().getCurrentUser();
 
-        // LOGICA INTELLIGENTE DI RITORNO (Identica al Save)
-        if ("TRAINER".equals(currentUser.getRole()) && this.targetAthlete != null) {
-            // Se sono un Trainer e stavo lavorando su un cliente, TORNA AL CLIENTE
+        if (isTrainerWorkingOnClient(currentUser)) {
             ApplicationController.getInstance().loadTrainerDashboard(this.targetAthlete);
         } else {
-            // Altrimenti comportamento standard
             ApplicationController.getInstance().loadHomeBasedOnRole();
         }
     }
@@ -119,7 +140,9 @@ public class PlanManagerController implements Controller {
 
     public void addExerciseToPlan(WorkoutExerciseBean newExercise) {
         if (newExercise == null) return;
-        if (currentPlan.getExerciseList() == null) currentPlan.setExerciseList(new ArrayList<>());
+        if (currentPlan.getExerciseList() == null) {
+            currentPlan.setExerciseList(new ArrayList<>());
+        }
 
         currentPlan.getExerciseList().add(newExercise);
         view.updateExerciseTable(currentPlan.getExerciseList());
@@ -138,29 +161,36 @@ public class PlanManagerController implements Controller {
         int totalSeconds = 0;
         if (currentPlan != null && currentPlan.getExerciseList() != null) {
             for (WorkoutExerciseBean ex : currentPlan.getExerciseList()) {
-                int activeTime = ex.getSets() * ex.getReps() * 4;
-                int restTime = ex.getSets() * ex.getRestTime();
-                totalSeconds += activeTime + restTime + 60;
+                totalSeconds += calculateExerciseDuration(ex);
             }
         }
         view.updateTotalTime("Durata stimata: ~" + (totalSeconds / 60) + " min");
     }
 
+    private int calculateExerciseDuration(WorkoutExerciseBean exercise) {
+        int activeTime = exercise.getSets() * exercise.getReps() * SECONDS_PER_REP;
+        int restTime = exercise.getSets() * exercise.getRestTime();
+        return activeTime + restTime + TRANSITION_TIME;
+    }
+
     private void loadAvailableExercises() {
         try {
             List<Exercise> exercises = exerciseDAO.findAll();
-            List<ExerciseBean> beans = exercises.stream().map(this::toExerciseBean).collect(Collectors.toList());
+            List<ExerciseBean> beans = exercises.stream()
+                    .map(this::toExerciseBean)
+                    .toList();
             view.populateExerciseMenu(beans);
-        } catch (Exception e) {
-            // view.showError("Errore API"); // Silenzioso per evitare spam all'avvio
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Impossibile caricare gli esercizi disponibili", e);
+            view.populateExerciseMenu(new ArrayList<>());
         }
     }
 
     public List<ExerciseBean> searchExercisesOnApi(String keyword) {
-        try {
-            List<Exercise> results = exerciseDAO.search(keyword);
-            return results.stream().map(this::toExerciseBean).collect(Collectors.toList());
-        } catch (Exception e) { return new ArrayList<>(); }
+        List<Exercise> results = exerciseDAO.search(keyword);
+        return results.stream()
+                .map(this::toExerciseBean)
+                .toList();
     }
 
     private void populateViewWithPlanData() {
@@ -178,25 +208,16 @@ public class PlanManagerController implements Controller {
         bean.setId(String.valueOf(e.getId()));
         bean.setName(e.getName());
         bean.setDescription(e.getDescription());
-        bean.setMuscleGroup(e.getMuscleGroup() != null ? e.getMuscleGroup().name() : "UNKNOWN");
+        bean.setMuscleGroup(e.getMuscleGroup() != null ? e.getMuscleGroup().name() : DEFAULT_MUSCLE_GROUP);
         return bean;
     }
 
-    // QUESTO È IL METODO CRUCIALE PER L'ASSEGNAZIONE CORRETTA
-    private WorkoutPlan toModelWorkoutPlan(WorkoutPlanBean bean) throws SQLException {
-        if (bean == null) return null;
-
-        // --- GESTIONE ID PROPRIETARIO (Fix Trainer/Atleta) ---
-        int ownerId;
-        if (this.targetAthlete != null) {
-            // Se sono un Trainer che crea per un cliente
-            ownerId = this.targetAthlete.getId();
-        } else {
-            // Se sono un utente che crea per me stesso
-            UserBean me = SessionManager.getInstance().getCurrentUser();
-            if (me == null) throw new IllegalStateException("Nessun utente loggato");
-            ownerId = me.getId();
+    private WorkoutPlan toModelWorkoutPlan(WorkoutPlanBean bean) {
+        if (bean == null) {
+            return null;
         }
+
+        int ownerId = determineOwnerId();
 
         Athlete athlete = new Athlete();
         athlete.setId(ownerId);
@@ -217,12 +238,35 @@ public class PlanManagerController implements Controller {
         return plan;
     }
 
-    private WorkoutExercise toModelWorkoutExercise(WorkoutExerciseBean b) {
-        MuscleGroup mg = MuscleGroup.CHEST; // Default
-        try { if(b.getMuscleGroup()!=null) mg = MuscleGroup.valueOf(b.getMuscleGroup()); } catch(Exception e){}
+    private int determineOwnerId() {
+        if (this.targetAthlete != null) {
+            return this.targetAthlete.getId();
+        }
 
-        Exercise definition = new Exercise(0, b.getExerciseName(), "Custom", mg);
-        return new WorkoutExercise(definition, b.getSets(), b.getReps(), b.getRestTime());
+        UserBean currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalStateException("Nessun utente loggato");
+        }
+        return currentUser.getId();
+    }
+
+    private WorkoutExercise toModelWorkoutExercise(WorkoutExerciseBean bean) {
+        MuscleGroup muscleGroup = parseMuscleGroup(bean.getMuscleGroup());
+        Exercise definition = new Exercise(0, bean.getExerciseName(), "Custom", muscleGroup);
+        return new WorkoutExercise(definition, bean.getSets(), bean.getReps(), bean.getRestTime());
+    }
+
+    private MuscleGroup parseMuscleGroup(String muscleGroupStr) {
+        if (muscleGroupStr == null) {
+            return MuscleGroup.CHEST;
+        }
+
+        try {
+            return MuscleGroup.valueOf(muscleGroupStr);
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Gruppo muscolare non valido: " + muscleGroupStr, e);
+            return MuscleGroup.CHEST;
+        }
     }
 
     @Override

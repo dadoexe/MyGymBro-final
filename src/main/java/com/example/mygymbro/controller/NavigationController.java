@@ -10,11 +10,13 @@ import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.WorkoutPlan;
 import com.example.mygymbro.views.AthleteView;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NavigationController implements Controller {
+
+    private static final String DEFAULT_EXERCISE_NAME = "Esercizio";
+    private static final String DEFAULT_MUSCLE_GROUP = "Misto";
 
     private AthleteView view;
     private WorkoutPlanDAO workoutPlanDAO;
@@ -57,9 +59,11 @@ public class NavigationController implements Controller {
             view.showError("Impossibile caricare le schede.");
         }
     }
+
     public void openPlanPreview(WorkoutPlanBean plan) {
         ApplicationController.getInstance().loadWorkoutPreview(plan);
     }
+
     public void startLiveSession(WorkoutPlanBean plan) {
         if (plan == null) return;
         // Deleghiamo all'ApplicationController il cambio di scena (o di vista CLI)
@@ -87,7 +91,7 @@ public class NavigationController implements Controller {
 
             loadDashboardData();
 
-        } catch (DAOException e) { // <--- CORREZIONE QUI: SQLException -> DAOException
+        } catch (DAOException e) {
             e.printStackTrace();
             view.showError("Errore cancellazione: " + e.getMessage());
         }
@@ -116,45 +120,73 @@ public class NavigationController implements Controller {
         if (models == null) return beans;
 
         for (WorkoutPlan plan : models) {
-            WorkoutPlanBean bean = new WorkoutPlanBean();
-            bean.setId(plan.getId()); // Fondamentale per l'eliminazione/modifica
-            bean.setName(plan.getName());
-            bean.setComment(plan.getComment());
-            bean.setCreationDate(plan.getCreationDate());
-
-            List<WorkoutExerciseBean> exerciseBeans = new ArrayList<>();
-            if (plan.getExercises() != null) {
-                for (com.example.mygymbro.model.WorkoutExercise modelEx : plan.getExercises()) {
-                    WorkoutExerciseBean exBean = new WorkoutExerciseBean();
-
-                    // Logica difensiva per il nome esercizio
-                    if (modelEx.getExercise() != null) {
-                        exBean.setExerciseName(modelEx.getExercise().getName());
-
-                    } else if (modelEx.getExerciseDefinition() != null) {
-                        exBean.setExerciseName(modelEx.getExerciseDefinition().getName());
-                    } else {
-                        exBean.setExerciseName("Esercizio");
-                    }
-
-                    // Logica difensiva per il gruppo muscolare
-                    String muscle = "Misto";
-                    if (modelEx.getExercise() != null && modelEx.getExercise().getMuscleGroup() != null) {
-                        muscle = modelEx.getExercise().getMuscleGroup().name();
-                    } else if (modelEx.getExerciseDefinition() != null && modelEx.getExerciseDefinition().getMuscleGroup() != null) {
-                        muscle = modelEx.getExerciseDefinition().getMuscleGroup().name();
-                    }
-
-                    exBean.setMuscleGroup(muscle);
-                    exBean.setSets(modelEx.getSets());
-                    exBean.setReps(modelEx.getReps());
-                    exBean.setRestTime(modelEx.getRestTime());
-                    exerciseBeans.add(exBean);
-                }
-            }
-            bean.setExerciseList(exerciseBeans);
+            WorkoutPlanBean bean = convertPlanToBean(plan);
             beans.add(bean);
         }
         return beans;
+    }
+
+    private WorkoutPlanBean convertPlanToBean(WorkoutPlan plan) {
+        WorkoutPlanBean bean = new WorkoutPlanBean();
+        bean.setId(plan.getId());
+        bean.setName(plan.getName());
+        bean.setComment(plan.getComment());
+        bean.setCreationDate(plan.getCreationDate());
+
+        List<WorkoutExerciseBean> exerciseBeans = convertExercisesToBeans(plan.getExercises());
+        bean.setExerciseList(exerciseBeans);
+
+        return bean;
+    }
+
+    private List<WorkoutExerciseBean> convertExercisesToBeans(List<com.example.mygymbro.model.WorkoutExercise> exercises) {
+        List<WorkoutExerciseBean> exerciseBeans = new ArrayList<>();
+
+        if (exercises == null) {
+            return exerciseBeans;
+        }
+
+        for (com.example.mygymbro.model.WorkoutExercise modelEx : exercises) {
+            WorkoutExerciseBean exBean = convertExerciseToBean(modelEx);
+            exerciseBeans.add(exBean);
+        }
+
+        return exerciseBeans;
+    }
+
+    private WorkoutExerciseBean convertExerciseToBean(com.example.mygymbro.model.WorkoutExercise modelEx) {
+        WorkoutExerciseBean exBean = new WorkoutExerciseBean();
+
+        exBean.setExerciseName(extractExerciseName(modelEx));
+        exBean.setMuscleGroup(extractMuscleGroup(modelEx));
+        exBean.setSets(modelEx.getSets());
+        exBean.setReps(modelEx.getReps());
+        exBean.setRestTime(modelEx.getRestTime());
+
+        return exBean;
+    }
+
+    private String extractExerciseName(com.example.mygymbro.model.WorkoutExercise modelEx) {
+        if (modelEx.getExercise() != null) {
+            return modelEx.getExercise().getName();
+        }
+
+        if (modelEx.getExerciseDefinition() != null) {
+            return modelEx.getExerciseDefinition().getName();
+        }
+
+        return DEFAULT_EXERCISE_NAME;
+    }
+
+    private String extractMuscleGroup(com.example.mygymbro.model.WorkoutExercise modelEx) {
+        if (modelEx.getExercise() != null && modelEx.getExercise().getMuscleGroup() != null) {
+            return modelEx.getExercise().getMuscleGroup().name();
+        }
+
+        if (modelEx.getExerciseDefinition() != null && modelEx.getExerciseDefinition().getMuscleGroup() != null) {
+            return modelEx.getExerciseDefinition().getMuscleGroup().name();
+        }
+
+        return DEFAULT_MUSCLE_GROUP;
     }
 }
