@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<?import java.net.URL?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mygymbro.views.gui.GraphicLoginView">
+    <stylesheets>
+        <URL value="@style.css" />
+    </stylesheets>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+    <Label text="MyGymBro" textFill="#2b2b2b">
+        <font>
+            <Font name="System Bold" size="32.0" />
+        </font>
+    </Label>
+
+    <Label text="Accedi al tuo account" textFill="#666666">
+        <font>
+            <Font size="14.0" />
+        </font>
+    </Label>
+
+    <TextField fx:id="txtUsername" maxWidth="250.0" promptText="Username" style="-fx-background-radius: 5;" />
+
+    <PasswordField fx:id="txtPassword" maxWidth="250.0" promptText="Password" style="-fx-background-radius: 5;" />
+
+    <Label fx:id="lblError" text="Credenziali errate!" textFill="RED" visible="false">
+        <font>
+            <Font size="12.0" />
+        </font>
+    </Label>
+
+    <Button fx:id="btnLogin" defaultButton="true" maxWidth="250.0" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;" text="ACCEDI">
+        <font>
+            <Font name="System Bold" size="14.0" />
+        </font>
+    </Button>
+
+</VBox>

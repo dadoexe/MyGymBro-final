@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.mygymbro.views.gui.GraphicWorkoutPreviewView"
+            style="-fx-background-color: #121212; -fx-padding: 20;">
+
+    <top>
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <Button text="← Indietro" onAction="#onBack" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 5;"/>
+            <Label fx:id="lblPlanName" text="NOME SCHEDA" textFill="WHITE">
+                <font><Font name="System Bold" size="28.0"/></font>
+            </Label>
+            <Label fx:id="lblDescription" text="Descrizione scheda..." textFill="#AAAAAA" wrapText="true"/>
+        </VBox>
+    </top>
+
+    <center>
+        <ListView fx:id="listExercises" style="-fx-background-color: #1E1E1E; -fx-control-inner-background: #1E1E1E;"/>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" style="-fx-padding: 20;">
+            <Button text="INIZIA ALLENAMENTO 🚀" onAction="#onStartSession"
+                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 15 30; -fx-background-radius: 30; -fx-cursor: hand;">
+                <effect>
+                    <javafx.scene.effect.DropShadow color="#4CAF50" radius="10"/>
+                </effect>
+            </Button>
+        </HBox>
+    </bottom>
+
+</BorderPane>

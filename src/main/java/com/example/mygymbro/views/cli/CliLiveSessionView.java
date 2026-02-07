@@ -1,0 +1,123 @@
+package com.example.mygymbro.views.cli;
+
+import com.example.mygymbro.bean.WorkoutExerciseBean;
+import com.example.mygymbro.controller.LiveSessionController;
+import com.example.mygymbro.views.LiveSessionView;
+import java.util.Scanner;
+
+public class CliLiveSessionView implements LiveSessionView, CliView {
+
+    private LiveSessionController listener;
+    private final Scanner scanner;
+    private int inputReps;
+    private float inputWeight;
+    private boolean sessionRunning = true;
+    private boolean inRestPhase = false;
+
+    public CliLiveSessionView() {
+        this.scanner = new Scanner(System.in);
+    }
+
+    @Override
+    public void run() {
+        System.out.println("\n=== LIVE SESSION ===");
+        if (listener != null) listener.startSession();
+
+        while (sessionRunning) {
+            try { Thread.sleep(200); } catch (Exception e) {}
+        }
+    }
+
+    @Override
+    public void showExercise(WorkoutExerciseBean exercise, int currentSet, int totalSets) {
+        inRestPhase = false;
+        System.out.println("\n🏋️ " + exercise.getExerciseName() + " (" + currentSet + "/" + totalSets + ")");
+        System.out.println("Target: " + exercise.getReps() + " reps");
+
+        // Input protetto
+        int reps = askInt("Reps fatte ('q' esci) > ");
+        if (reps == -1) { handleQuit(); return; }
+
+        float weight = askFloat("Carico kg ('q' esci) > ");
+        if (weight == -1) { handleQuit(); return; }
+
+        this.inputReps = reps;
+        this.inputWeight = weight;
+
+        System.out.println("✅ Premi INVIO per recuperare...");
+        scanner.nextLine(); // Consuma invio
+
+        if (listener != null) listener.confirmSet();
+    }
+
+    @Override
+    public void showRestPhase(int seconds, String nextExerciseName) {
+        inRestPhase = true;
+        System.out.println("☕ RECUPERO: " + seconds + "s (Prox: " + nextExerciseName + ")");
+        System.out.println("(Attendi la fine del timer...)");
+    }
+
+    @Override
+    public void updateTimerTick(String timeString) {
+        if (inRestPhase) System.out.print("\r⏳ " + timeString + "   ");
+    }
+
+    @Override
+    public void runOnUiThread(Runnable action) {
+        inRestPhase = false;
+        System.out.println(); // A capo dopo il timer
+        action.run();
+    }
+
+    @Override
+    public void showSessionRecap(String recapText) {
+        sessionRunning = false;
+        inRestPhase = false;
+        System.out.println("\n🏆 FINE SESSIONE!\n" + recapText);
+        System.out.println("\nPremi INVIO per tornare al menu.");
+
+        // FIX BUFFER: Assicuriamoci di leggere un invio pulito
+        if (scanner.hasNextLine()) {
+            scanner.nextLine();
+        }
+
+        if (listener != null) listener.quit();
+    }
+
+    private void handleQuit() {
+        sessionRunning = false;
+        if (listener != null) listener.quit();
+    }
+
+    // Metodi helper robusti contro loop infiniti
+    private int askInt(String p) {
+        System.out.print(p);
+        while (true) {
+            String line = scanner.nextLine().trim();
+            if (line.equalsIgnoreCase("q")) return -1;
+            if (line.isEmpty()) continue;
+            try { return Integer.parseInt(line); }
+            catch (Exception e) { System.out.print("Numero non valido: "); }
+        }
+    }
+
+    private float askFloat(String p) {
+        System.out.print(p);
+        while (true) {
+            String line = scanner.nextLine().trim().replace(",", ".");
+            if (line.equalsIgnoreCase("q")) return -1;
+            if (line.isEmpty()) continue;
+            try { return Float.parseFloat(line); }
+            catch (Exception e) { System.out.print("Numero non valido: "); }
+        }
+    }
+
+    // Getter standard...
+    @Override public int getInputReps() { return inputReps; }
+    @Override public float getInputWeight() { return inputWeight; }
+    @Override public void clearInputFields() {}
+    @Override public void updateSessionProgress(double p) {}
+    @Override public void setListener(LiveSessionController c) { this.listener = c; }
+    @Override public void showError(String m) { System.out.println("❌ " + m); }
+    @Override public void showSuccess(String m) {}
+}

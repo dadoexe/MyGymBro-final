@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.mygymbro.views.gui.GraphicWorkoutBuilderView"
+      stylesheets="@style.css"
+      spacing="10" alignment="CENTER" styleClass="root">
+
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+    <Label text="Crea Nuova Scheda" styleClass="header-label"/>
+    <HBox spacing="15" alignment="CENTER_LEFT">
+    <TextField fx:id="txtPlanName" promptText="Nome Scheda..." />
+    <TextArea fx:id="txtComment" promptText="Commenti..." maxWidth="400" prefHeight="50"/>
+        <Label fx:id="lblTotalTime" text="Durata stimata: 0 min" styleClass="time-label" />
+
+    </HBox>
+    <Separator/>
+
+    <HBox spacing="10" alignment="CENTER_LEFT"> <TextField fx:id="txtSearchExercise" promptText="Cerca esercizio..." prefWidth="200.0" />
+
+        <ComboBox fx:id="comboExercises" promptText="Seleziona Esercizio" prefWidth="250.0" />
+
+        <TextField fx:id="txtSets" promptText="Sets" prefWidth="70.0" alignment="CENTER"/>
+
+        <TextField fx:id="txtReps" promptText="Reps" prefWidth="70.0" alignment="CENTER"/>
+
+        <TextField fx:id="txtRest" promptText="Rest" prefWidth="80.0" alignment="CENTER"/>
+
+        <Button text="Aggiungi" onAction="#onAddExercise" styleClass="button"/>
+
+    </HBox>
+
+    <TableView fx:id="tableExercises" maxWidth="600" prefHeight="200">
+        <columns>
+            <TableColumn fx:id="colName" text="Esercizio" prefWidth="200"/>
+            <TableColumn fx:id="colMuscle" text="Gruppo" prefWidth="100"/>
+            <TableColumn fx:id="colSets" text="Sets" prefWidth="50"/>
+            <TableColumn fx:id="colReps" text="Reps" prefWidth="50"/>
+            <TableColumn fx:id="colRest" text="Recupero" prefWidth="80"/>
+            <TableColumn fx:id="colDelete" text="" prefWidth="50" style="-fx-alignment: CENTER;"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="20" alignment="CENTER">
+        <Button text="Annulla" onAction="#onCancel" styleClass="btn-danger"/>
+
+        <Button fx:id="btnSave" text="SALVA SCHEDA" onAction="#onSavePlan" styleClass="btn-success"/>
+    </HBox>
+
+</VBox>

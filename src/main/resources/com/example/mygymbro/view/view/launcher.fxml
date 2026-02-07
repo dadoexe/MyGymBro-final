@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: #121212;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mygymbro.views.gui.LauncherController">
+    <padding>
+        <Insets bottom="50.0" left="50.0" right="50.0" top="50.0" />
+    </padding>
+
+    <Label text="MYGYMBRO LAUNCHER" textFill="WHITE">
+        <font>
+            <Font name="System Bold" size="24.0" />
+        </font>
+    </Label>
+
+    <Button fx:id="btnGui" mnemonicParsing="false" onAction="#startGui" prefWidth="200.0" style="-fx-background-color: #00E676; -fx-text-fill: black; -fx-font-weight: bold;" text="GUI VERSION" />
+
+    <Button fx:id="btnCli" mnemonicParsing="false" onAction="#startCli" prefWidth="200.0" style="-fx-background-color: #2B2B36; -fx-text-fill: white;" text="CLI VERSION" />
+
+    <Button fx:id="btnDemo" mnemonicParsing="false" onAction="#toggleDemo" prefWidth="200.0" style="-fx-background-color: #FF5252; -fx-text-fill: white;" text="DEMO MODE: OFF" />
+
+</VBox>
