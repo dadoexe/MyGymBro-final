@@ -81,35 +81,54 @@ public class GraphicTrainerView implements TrainerView, GraphicView {
     // --- 2. GESTIONE EVENTI SELEZIONE (Private) ---
 
     private void setupSelectionListeners() {
-        // Listener Selezione Atleta
-        if (listAthletes != null) {
-            listAthletes.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != null) {
-                    // 1. Abilita UI
-                    if (btnAddPlan != null) btnAddPlan.setDisable(false);
-                    updateSelectedClientInfo(newVal);
+        setupAthleteSelectionListener();
+        setupPlanSelectionListener();
+    }
 
-                    // 2. Chiama il metodo specifico del Controller
-                    if (listener != null) {
-                        listener.loadPlansForAthlete(newVal);
-                    }
-                } else {
-                    // Deselezione
-                    if (btnAddPlan != null) btnAddPlan.setDisable(true);
-                    updateSelectedClientInfo(null);
-                    if (listWorkoutPlans != null) listWorkoutPlans.getItems().clear();
-                }
-            });
+    private void setupAthleteSelectionListener() {
+        if (listAthletes == null) return;
+
+        listAthletes.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                handleAthleteSelected(newVal);
+            } else {
+                handleAthleteDeselected();
+            }
+        });
+    }
+
+    private void handleAthleteSelected(AthleteBean athlete) {
+        // 1. Abilita UI
+        if (btnAddPlan != null) {
+            btnAddPlan.setDisable(false);
         }
+        updateSelectedClientInfo(athlete);
 
-        // Listener Selezione Scheda (per abilitare Modifica)
+        // 2. Chiama il metodo specifico del Controller
+        if (listener != null) {
+            listener.loadPlansForAthlete(athlete);
+        }
+    }
+
+    private void handleAthleteDeselected() {
+        // Deselezione
+        if (btnAddPlan != null) {
+            btnAddPlan.setDisable(true);
+        }
+        updateSelectedClientInfo(null);
         if (listWorkoutPlans != null) {
-            listWorkoutPlans.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                if (btnEditPlan != null) {
-                    btnEditPlan.setDisable(newVal == null);
-                }
-            });
+            listWorkoutPlans.getItems().clear();
         }
+    }
+
+    private void setupPlanSelectionListener() {
+        if (listWorkoutPlans == null) return;
+
+        listWorkoutPlans.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (btnEditPlan != null) {
+                btnEditPlan.setDisable(newVal == null);
+            }
+        });
     }
 
     // --- 3. EVENTI BOTTONI (Chiamati da FXML onAction) ---
