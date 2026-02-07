@@ -4,8 +4,12 @@ import com.example.mygymbro.bean.WorkoutExerciseBean;
 import com.example.mygymbro.controller.LiveSessionController;
 import com.example.mygymbro.views.LiveSessionView;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CliLiveSessionView implements LiveSessionView, CliView {
+
+    private static final Logger LOGGER = Logger.getLogger(CliLiveSessionView.class.getName());
 
     private LiveSessionController listener;
     private final Scanner scanner;
@@ -27,13 +31,14 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
-                // CORREZIONE: Non lasciare il catch vuoto!
-                // 1. Ripristina lo stato di interruzione
+                // Ripristina lo stato di interruzione
                 Thread.currentThread().interrupt();
-                // 2. Esci dal ciclo se il thread viene interrotto
+                LOGGER.log(Level.WARNING, "Sessione live interrotta", e);
+                // Esci dal ciclo se il thread viene interrotto
                 break;
             }
-    }}
+        }
+    }
 
     @Override
     public void showExercise(WorkoutExerciseBean exercise, int currentSet, int totalSets) {
@@ -43,10 +48,16 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
 
         // Input protetto
         int reps = askInt("Reps fatte ('q' esci) > ");
-        if (reps == -1) { handleQuit(); return; }
+        if (reps == -1) {
+            handleQuit();
+            return;
+        }
 
         float weight = askFloat("Carico kg ('q' esci) > ");
-        if (weight == -1) { handleQuit(); return; }
+        if (weight == -1) {
+            handleQuit();
+            return;
+        }
 
         this.inputReps = reps;
         this.inputWeight = weight;
@@ -97,25 +108,31 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
     }
 
     // Metodi helper robusti contro loop infiniti
-    private int askInt(String p) {
-        System.out.print(p);
+    private int askInt(String prompt) {
+        System.out.print(prompt);
         while (true) {
             String line = scanner.nextLine().trim();
             if (line.equalsIgnoreCase("q")) return -1;
             if (line.isEmpty()) continue;
-            try { return Integer.parseInt(line); }
-            catch (Exception e) { System.out.print("Numero non valido: "); }
+            try {
+                return Integer.parseInt(line);
+            } catch (NumberFormatException numberFormatException) {
+                System.out.print("Numero non valido: ");
+            }
         }
     }
 
-    private float askFloat(String p) {
-        System.out.print(p);
+    private float askFloat(String prompt) {
+        System.out.print(prompt);
         while (true) {
             String line = scanner.nextLine().trim().replace(",", ".");
             if (line.equalsIgnoreCase("q")) return -1;
             if (line.isEmpty()) continue;
-            try { return Float.parseFloat(line); }
-            catch (Exception e) { System.out.print("Numero non valido: "); }
+            try {
+                return Float.parseFloat(line);
+            } catch (NumberFormatException numberFormatException) {
+                System.out.print("Numero non valido: ");
+            }
         }
     }
 
@@ -136,23 +153,23 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
     }
 
     @Override
-    public void updateSessionProgress(double p) {
+    public void updateSessionProgress(double progress) {
         // Intenzionalmente vuoto: La CLI non ha una progress bar visuale.
     }
 
     @Override
-    public void setListener(LiveSessionController c) {
-        this.listener = c;
+    public void setListener(LiveSessionController controller) {
+        this.listener = controller;
     }
 
     @Override
-    public void showError(String m) {
-        System.out.println("❌ " + m);
+    public void showError(String message) {
+        System.out.println("❌ " + message);
     }
 
     @Override
-    public void showSuccess(String m) {
+    public void showSuccess(String message) {
         // Già che ci siamo, stampiamolo! Risolve il problema del parametro inutilizzato.
-        System.out.println("✅ " + m);
+        System.out.println("✅ " + message);
     }
 }
