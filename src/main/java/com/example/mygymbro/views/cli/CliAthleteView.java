@@ -23,49 +23,48 @@ public class CliAthleteView implements AthleteView, CliView {
 
     @Override
     public void run() {
-        // RIMOSSO IL BLOCCO 'FIX BUFFER' CHE CAUSAVA IL DOPPIO INVIO
-        // Niente System.in.available(), niente hasNextLine().
-
-        // Carichiamo i dati solo se non li abbiamo (evita ricaricamenti doppi se torni indietro)
+        // Carichiamo i dati solo se non li abbiamo
         if (myPlansCache == null && listener != null) {
             listener.loadDashboardData();
         }
 
         boolean stay = true;
         while (stay) {
-            // Controllo Sessione: se sloggato, esci subito
             if (SessionManager.getInstance().getCurrentUser() == null) {
                 stay = false;
                 break;
             }
 
-            System.out.println("\n=== MENU PRINCIPALE ===");
-            System.out.println("1. Crea Nuova Scheda");
-            System.out.println("2. Gestisci le tue schede");
-            System.out.println("0. Logout");
-            System.out.print("Scelta > ");
-
+            printMainMenu();
             String choice = scanner.nextLine().trim();
-            if (choice.isEmpty()) continue; // Ignora invii a vuoto senza bloccare
+            if (choice.isEmpty()) continue;
 
-            switch (choice) {
-                case "1":
-                    stay = false; // Esci dal loop PRIMA di cambiare vista
-                    if (listener != null) listener.loadWorkoutBuilder();
-                    break;
-                case "2":
-                    // Se handleManagePlans ritorna true, significa che dobbiamo chiudere anche questo menu
-                    if (handleManagePlans()) {
-                        stay = false;
-                    }
-                    break;
-                case "0":
-                    stay = false;
-                    if (listener != null) listener.logout();
-                    break;
-                default:
-                    System.out.println("Comando non valido.");
-            }
+            stay = processMainMenuChoice(choice);
+        }
+    }
+
+    private void printMainMenu() {
+        System.out.println("\n=== MENU PRINCIPALE ===");
+        System.out.println("1. Crea Nuova Scheda");
+        System.out.println("2. Gestisci le tue schede");
+        System.out.println("0. Logout");
+        System.out.print("Scelta > ");
+    }
+
+    private boolean processMainMenuChoice(String choice) {
+        switch (choice) {
+            case "1":
+                if (listener != null) listener.loadWorkoutBuilder();
+                return false; // Cambio vista
+            case "2":
+                // Se ritorna true, dobbiamo uscire anche da questo menu (cambio vista)
+                return !handleManagePlans();
+            case "0":
+                if (listener != null) listener.logout();
+                return false;
+            default:
+                System.out.println("Comando non valido.");
+                return true; // Resta nel menu
         }
     }
 
@@ -80,39 +79,43 @@ public class CliAthleteView implements AthleteView, CliView {
         while (managing) {
             if (SessionManager.getInstance().getCurrentUser() == null) return true;
 
-            System.out.println("\n--- SELEZIONA UNA SCHEDA ---");
-            for (int i = 0; i < myPlansCache.size(); i++) {
-                System.out.println((i + 1) + ". " + myPlansCache.get(i).getName());
-            }
-            System.out.println("0. Indietro");
-            System.out.print("Numero > ");
-
+            printPlanList();
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) continue;
 
-            try {
-                int selection = Integer.parseInt(input);
-
-                if (selection == 0) {
-                    managing = false; // Torna al menu principale
-                } else if (selection > 0 && selection <= myPlansCache.size()) {
-                    WorkoutPlanBean selectedPlan = myPlansCache.get(selection - 1);
-
-                    // Se askActionForPlan ritorna TRUE, usciamo da tutto per cambiare vista
-                    if (askActionForPlan(selectedPlan)) {
-                        return true;
-                    }
-                } else {
-                    System.out.println("Numero non valido.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Inserisci un numero valido.");
+            int selection = parseSelection(input);
+            if (selection == 0) {
+                managing = false; // Torna indietro
+            } else if (selection > 0 && selection <= myPlansCache.size()) {
+                WorkoutPlanBean selectedPlan = myPlansCache.get(selection - 1);
+                // Se askActionForPlan ritorna TRUE, usciamo da tutto
+                if (askActionForPlan(selectedPlan)) return true;
+            } else if (selection != -1) {
+                System.out.println("Numero non valido.");
             }
         }
         return false;
     }
 
-    // Ritorna TRUE se cambiamo vista
+    private void printPlanList() {
+        System.out.println("\n--- SELEZIONA UNA SCHEDA ---");
+        for (int i = 0; i < myPlansCache.size(); i++) {
+            System.out.println((i + 1) + ". " + myPlansCache.get(i).getName());
+        }
+        System.out.println("0. Indietro");
+        System.out.print("Numero > ");
+    }
+
+    // Metodo helper per ridurre la complessità del try-catch
+    private int parseSelection(String input) {
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Inserisci un numero valido.");
+            return -1; // Codice errore interno
+        }
+    }
+
     private boolean askActionForPlan(WorkoutPlanBean plan) {
         System.out.println("\nScheda: " + plan.getName());
         System.out.println("1. Modifica");
@@ -125,28 +128,33 @@ public class CliAthleteView implements AthleteView, CliView {
         switch (action) {
             case "1":
                 if (listener != null) listener.modifyPlan(plan);
-                return true; // CAMBIO VISTA
+                return true;
             case "2":
-                System.out.print("Sicuro? (si/no): ");
-                if (scanner.nextLine().trim().equalsIgnoreCase("si")) {
-                    if (listener != null) listener.deletePlan(plan);
-                }
-                return false; // RESTA QUI
+                deletePlanFlow(plan);
+                return false;
             case "3":
                 System.out.println(">>> Avvio allenamento...");
                 if (listener != null) listener.startLiveSession(plan);
-                // Quando la live session finisce, torneremo qui.
-                // Siccome la LiveSession crea la sua UI e poi la distrugge,
-                // possiamo decidere se tornare al menu principale (true) o restare qui (false).
-                // Per pulizia, torniamo al menu principale:
                 return true;
             default:
                 return false;
         }
     }
 
+    private void deletePlanFlow(WorkoutPlanBean plan) {
+        System.out.print("Sicuro? (si/no): ");
+        if (scanner.nextLine().trim().equalsIgnoreCase("si")) {
+            if (listener != null) listener.deletePlan(plan);
+        }
+    }
+
     // ... Interface methods ...
     @Override public void setListener(NavigationController l) { this.listener = l; }
-    @Override public void updateWelcomeMessage(String m) {}
+
+    // CORREZIONE 2: Risolto "Unused method parameter"
+    @Override public void updateWelcomeMessage(String m) {
+        // Metodo vuoto intenzionale: In CLI non mostriamo il messaggio di benvenuto dinamico
+    }
+
     @Override public void updateWorkoutList(List<WorkoutPlanBean> l) { this.myPlansCache = l; }
 }

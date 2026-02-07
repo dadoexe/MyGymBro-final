@@ -17,14 +17,11 @@ import java.util.logging.Logger;
 
 public final class ApplicationController implements Controller {
 
-    // Logger: Fondamentale per SonarCloud (sostituisce System.out/err)
     private static final Logger logger = Logger.getLogger(ApplicationController.class.getName());
 
     private static ApplicationController instance = null;
 
-    // CORREZIONE: Deve essere private
     private boolean isGraphicMode;
-
     private ViewFactory viewFactory;
     private Stage mainStage;
     private Controller currentController;
@@ -42,7 +39,7 @@ public final class ApplicationController implements Controller {
 
     public void configure(boolean isGraphic, Stage stage) {
         this.isGraphicMode = isGraphic;
-        this.mainStage = stage; // Sarà null in CLI, ok.
+        this.mainStage = stage;
 
         if (isGraphic) {
             this.viewFactory = new GraphicViewFactory();
@@ -84,7 +81,6 @@ public final class ApplicationController implements Controller {
         }
     }
 
-    // Overload per compatibilità
     public void loadTrainerDashboard() {
         loadTrainerDashboard(null);
     }
@@ -125,20 +121,14 @@ public final class ApplicationController implements Controller {
         renderView(view);
     }
 
-    // Overload generico
     public void loadWorkoutBuilder() {
         loadWorkoutBuilder(null, null);
     }
 
     public void loadWorkoutBuilderForClient(AthleteBean client) {
-        // Riusiamo la logica centrale passando il cliente come owner e nessun piano da editare
         loadWorkoutBuilder(null, client);
     }
 
-    /**
-     * Metodo centrale per caricare il WorkoutBuilder.
-     * Gestisce sia la modifica (planToEdit != null) che la creazione per un cliente (owner != null).
-     */
     public void loadWorkoutBuilder(WorkoutPlanBean planToEdit, AthleteBean owner) {
         try {
             disposeCurrentController();
@@ -163,7 +153,6 @@ public final class ApplicationController implements Controller {
             renderView(view);
 
         } catch (Exception e) {
-            // CORREZIONE: Log dell'eccezione invece di printStackTrace
             logger.log(Level.SEVERE, "Errore nel caricamento del WorkoutBuilder", e);
         }
     }
@@ -208,16 +197,15 @@ public final class ApplicationController implements Controller {
     private void disposeCurrentController() {
         if (currentController != null) {
             currentController.dispose();
-            currentController = null; // Evita memory leaks
+            currentController = null;
         }
     }
 
     private void renderView(Object viewObject) {
         if (isGraphicMode) {
-            // --- LOGICA JAVAFX ---
-            if (viewObject instanceof GraphicView graphicView) {
-
-
+            // LOGICA JAVAFX: Usiamo il cast esplicito (sicuro e pulito per Sonar)
+            if (viewObject instanceof GraphicView) {
+                GraphicView graphicView = (GraphicView) viewObject;
                 Parent root = graphicView.getRoot();
                 if (root != null && mainStage != null) {
                     Scene scene = new Scene(root);
@@ -226,11 +214,12 @@ public final class ApplicationController implements Controller {
                 }
             }
         } else {
-            // --- LOGICA CLI ---
-            if (viewObject instanceof CliView cliView) {
+            // LOGICA CLI
+            if (viewObject instanceof CliView) {
+                CliView cliView = (CliView) viewObject;
                 cliView.run();
             } else {
-                logger.log(Level.SEVERE, "Errore: La vista caricata non è una CLI valida: {0}", viewObject.getClass().getName());
+                logger.log(Level.WARNING, "Errore: La vista caricata non è una CLI valida: {0}", viewObject.getClass().getName());
             }
         }
     }
@@ -244,7 +233,6 @@ public final class ApplicationController implements Controller {
             mainStage.close();
         }
 
-        // Questo è accettabile nel Main Controller
         System.exit(0);
     }
 }

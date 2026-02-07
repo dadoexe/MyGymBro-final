@@ -13,14 +13,9 @@ public class Athlete extends User {
     public Athlete(){
         super();
     }
-    public Athlete(int id, String username, String password, String name, int age, String email, String cognome, float weight, float height) {
-        super(id, username, password, name,cognome, email); // Passa i dati comuni al padre
-        this.weight = weight;
-        this.height = height;
-        this.age = age;
-
+    public Athlete(int id, String username, String password, String name, String cognome, String email) {
+        super(id, username, password, name, cognome, email);
     }
-
     public float getWeight() {
         return weight;
     }

@@ -12,13 +12,12 @@ public class MySQLUserDAO implements UserDAO {
 
     @Override
     public User findByUsername(String username) {
-        // 1. QUERY COMPLETA: Guarda sia in ATHLETE che in PERSONAL_TRAINER
         String query = "SELECT u.*, " +
-                "a.weight, a.height, a.age, " +   // Dati Atleta
-                "pt.cert_code " +                 // Dati Trainer
+                "a.weight, a.height, a.age, " +
+                "pt.cert_code " +
                 "FROM user u " +
                 "LEFT JOIN athlete a ON u.id = a.user_id " +
-                "LEFT JOIN personal_trainer pt ON u.id = pt.user_id " + // <--- FONDAMENTALE
+                "LEFT JOIN personal_trainer pt ON u.id = pt.user_id " +
                 "WHERE u.username = ?";
 
         Connection conn = null;
@@ -34,26 +33,30 @@ public class MySQLUserDAO implements UserDAO {
             rs = stmt.executeQuery();
 
             if (rs.next()) {
-                // --- A. RECUPERO DATI COMUNI (Tabella User) ---
                 int id = rs.getInt("id");
                 String dbUsername = rs.getString("username");
                 String dbPassword = rs.getString("password");
-                String nome = rs.getString("nome");
+
+                // --- CORREZIONE QUI ---
+                String nome = rs.getString("nome"); // Era "name", rimettiamo "nome"
+
                 String cognome = rs.getString("cognome");
                 String email = rs.getString("email");
 
-                // --- B. CONTROLLO DI TIPO ---
                 String certCode = rs.getString("cert_code");
 
                 if (certCode != null && !certCode.isEmpty()) {
-                    // 1. Trovato codice certificazione -> È UN TRAINER!
                     user = new PersonalTrainer(id, dbUsername, dbPassword, nome, cognome, email, certCode);
                 } else {
-                    // 2. Altrimenti -> È UN ATLETA (Default)
-                    float weight = rs.getFloat("weight");
-                    float height = rs.getFloat("height");
-                    int age = rs.getInt("age");
-                    user = new Athlete(id, dbUsername, dbPassword, nome, age, email, cognome, weight, height);
+                    // Creiamo l'atleta con il costruttore "leggero"
+                    Athlete athlete = new Athlete(id, dbUsername, dbPassword, nome, cognome, email);
+
+                    // E aggiungiamo i dati fisici dopo
+                    athlete.setWeight(rs.getFloat("weight"));
+                    athlete.setHeight(rs.getFloat("height"));
+                    athlete.setAge(rs.getInt("age"));
+
+                    user = athlete;
                 }
             }
 
@@ -66,7 +69,6 @@ public class MySQLUserDAO implements UserDAO {
 
         return user;
     }
-
 
     @Override
     public void save(User user) throws SQLException{
