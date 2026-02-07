@@ -216,8 +216,7 @@ public final class ApplicationController implements Controller {
         if (isGraphicMode) {
             // --- LOGICA JAVAFX ---
             if (viewObject instanceof GraphicView graphicView) {
-                // Java 14+ pattern matching (se non va, usa il cast classico)
-                // Se usi Java 8/11 usa: if (viewObject instanceof GraphicView) { GraphicView graphicView = (GraphicView) viewObject; ... }
+
 
                 Parent root = graphicView.getRoot();
                 if (root != null && mainStage != null) {
