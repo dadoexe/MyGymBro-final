@@ -5,20 +5,23 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GraphicViewFactory implements ViewFactory {
+
+    private static final Logger LOGGER = Logger.getLogger(GraphicViewFactory.class.getName());
 
     @Override
     public LoginView createLoginView() {
         try {
-            // Assicurati che il percorso dell'FXML sia corretto!
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/mygymbro/view/view/schermataLogin.fxml"));
             Parent root = loader.load();
             GraphicLoginView view = loader.getController();
             view.setRoot(root);
             return view;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista Login", e);
             return null;
         }
     }
@@ -32,24 +35,25 @@ public class GraphicViewFactory implements ViewFactory {
             view.setRoot(root);
             return view;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista WorkoutBuilder", e);
             return null;
         }
     }
 
-     @Override
+    @Override
     public AthleteView createAthleteView() {
-       try{
-           FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/mygymbro/view/view/mainpage.fxml"));
-              Parent root = loader.load();
-              GraphicAthleteView view = loader.getController();
-              view.setRoot(root); //
-           return view;
-       }catch (IOException e){
-           e.printStackTrace();
-           return null;
-       }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/mygymbro/view/view/mainpage.fxml"));
+            Parent root = loader.load();
+            GraphicAthleteView view = loader.getController();
+            view.setRoot(root);
+            return view;
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista Athlete", e);
+            return null;
+        }
     }
+
     @Override
     public TrainerView createTrainerView() {
         try {
@@ -59,32 +63,32 @@ public class GraphicViewFactory implements ViewFactory {
             view.setRoot(root);
             return view;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista Trainer", e);
             return null;
         }
     }
+
     @Override
     public WorkoutPreviewView createWorkoutPreviewView() {
-        return loadView("/com/example/mygymbro/view/view/WorkoutPreview.fxml");
+        return loadView("/com/example/mygymbro/view/view/WorkoutPreview.fxml", "WorkoutPreview");
     }
 
     @Override
     public LiveSessionView createLiveSessionView() {
-        return loadView("/com/example/mygymbro/view/view/LiveSessionView.fxml"); // O LiveSession.fxml, controlla il nome file!
+        return loadView("/com/example/mygymbro/view/view/LiveSessionView.fxml", "LiveSession");
     }
 
-    // Metodo helper (se lo stai usando, altrimenti usa il try-catch classico con FXMLLoader)
-    private <T> T loadView(String path) {
+    // Metodo helper generico per caricare le view
+    private <T> T loadView(String path, String viewName) {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource(path));
-            javafx.scene.Parent root = loader.load();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
+            Parent root = loader.load();
             GraphicView view = loader.getController();
             view.setRoot(root);
             return (T) view;
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista " + viewName, e);
             return null;
         }
     }
-
 }
