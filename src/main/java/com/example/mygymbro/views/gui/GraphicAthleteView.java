@@ -13,77 +13,89 @@ import javafx.scene.control.ListView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class GraphicAthleteView implements AthleteView, GraphicView {
 
-    @FXML private Label lblWelcome;
-    @FXML private Label lblTotalPlans;
-    @FXML private Label lblLastActivity;
 
-    // --- CORREZIONE: TENIAMO SOLO QUESTA VARIABILE ---
-    @FXML private ListView<WorkoutPlanBean> listWorkoutPlans;
 
-    private NavigationController listener;
-    private Parent root;
+    public class GraphicAthleteView implements AthleteView, GraphicView {
 
-    @FXML
-    public void initialize() {
-        // Pulisce la lista all'avvio per sicurezza
-        if (listWorkoutPlans != null) {
-            listWorkoutPlans.getItems().clear();
+        @FXML private Label lblWelcome;
+        @FXML private Label lblTotalPlans;
+        @FXML private Label lblLastActivity;
+        private Parent root;
+        @FXML private ListView<WorkoutPlanBean> listWorkoutPlans;
 
-            // --- GESTIONE DOPPIO CLIC (Aggiornata per usare listWorkoutPlans) ---
-            listWorkoutPlans.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2) { // 2 click veloci
-                    WorkoutPlanBean selected = listWorkoutPlans.getSelectionModel().getSelectedItem();
-                    if (selected != null && listener != null) {
-                        listener.openPlanPreview(selected);
-                    }
-                }
-            });
-        }
-    }
+        private NavigationController listener;
 
-    @Override
-    public void setListener(NavigationController listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public void updateWelcomeMessage(String msg) {
-        if (lblWelcome != null) lblWelcome.setText("Benvenuto " + msg + "!");
-    }
-
-    // --- METODO AGGIORNATO E SICURO ---
-    @Override
-    public void updateWorkoutList(List<WorkoutPlanBean> workoutPlans) {
-        Platform.runLater(() -> {
-            // 1. Aggiorna la lista centrale
+        @FXML
+        public void initialize() {
             if (listWorkoutPlans != null) {
                 listWorkoutPlans.getItems().clear();
-                if (workoutPlans != null) {
-                    listWorkoutPlans.getItems().addAll(workoutPlans);
-                }
+
+                listWorkoutPlans.setOnMouseClicked(event -> {
+                    if (event.getClickCount() == 2) {
+                        WorkoutPlanBean selected = listWorkoutPlans.getSelectionModel().getSelectedItem();
+                        if (selected != null && listener != null) {
+                            listener.openPlanPreview(selected);
+                        }
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void setListener(NavigationController listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void updateWelcomeMessage(String msg) {
+            if (lblWelcome != null) lblWelcome.setText("Benvenuto " + msg + "!");
+        }
+
+        // --- METODO REFACTORIZZATO (Cognitive Complexity bassissima) ---
+        @Override
+        public void updateWorkoutList(List<WorkoutPlanBean> workoutPlans) {
+            Platform.runLater(() -> {
+                updateListContent(workoutPlans);
+                updateTotalCounter(workoutPlans);
+                updateLastActivityDate(workoutPlans);
+            });
+        }
+
+        // --- METODI HELPER PRIVATI (Spezzano la complessità) ---
+
+        private void updateListContent(List<WorkoutPlanBean> workoutPlans) {
+            if (listWorkoutPlans == null) return;
+
+            listWorkoutPlans.getItems().clear();
+            if (workoutPlans != null) {
+                listWorkoutPlans.getItems().addAll(workoutPlans);
+            }
+        }
+
+        private void updateTotalCounter(List<WorkoutPlanBean> workoutPlans) {
+            if (lblTotalPlans == null) return;
+
+            int count = (workoutPlans != null) ? workoutPlans.size() : 0;
+            lblTotalPlans.setText(String.valueOf(count));
+        }
+
+        private void updateLastActivityDate(List<WorkoutPlanBean> workoutPlans) {
+            if (lblLastActivity == null) return;
+
+            if (workoutPlans == null || workoutPlans.isEmpty()) {
+                lblLastActivity.setText("--");
+                return;
             }
 
-            // 2. Aggiorna le Statistiche in alto
-            if (lblTotalPlans != null) {
-                lblTotalPlans.setText(String.valueOf(workoutPlans != null ? workoutPlans.size() : 0));
+            WorkoutPlanBean last = workoutPlans.get(workoutPlans.size() - 1);
+            if (last.getCreationDate() != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                lblLastActivity.setText(sdf.format(last.getCreationDate()));
+            } else {
+                lblLastActivity.setText("Recente");
             }
-
-            if (lblLastActivity != null) {
-                if (workoutPlans != null && !workoutPlans.isEmpty()) {
-                    WorkoutPlanBean last = workoutPlans.get(workoutPlans.size() - 1);
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-
-                    // Controllo null sulla data
-                    String dateStr = (last.getCreationDate() != null) ? sdf.format(last.getCreationDate()) : "Recente";
-                    lblLastActivity.setText(dateStr);
-                } else {
-                    lblLastActivity.setText("--");
-                }
-            }
-        });
-    }
+        }
 
     // --- BOTTONI ---
 
