@@ -91,9 +91,15 @@ public class RestApiExerciseDAO implements ExerciseDAO {
                 logger.log(Level.WARNING, "Errore API nella search: Codice {0}", response.statusCode());
             }
 
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             logger.log(Level.SEVERE, "Eccezione durante la ricerca API", e);
+
+            // Buona pratica: se è un errore di interruzione, ripristina il flag
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
+
         return modelList;
     }
 
@@ -119,19 +125,23 @@ public class RestApiExerciseDAO implements ExerciseDAO {
     private MuscleGroup mapApiBodyPartToEnum(String apiBodyPart) {
         if (apiBodyPart == null) return MuscleGroup.CHEST;
 
+        // Sintassi moderna: casi multipli sulla stessa riga separati da virgola
         switch (apiBodyPart.toLowerCase().trim()) {
-            case "chest":           return MuscleGroup.CHEST;
-            case "back":            return MuscleGroup.BACK;
-            case "shoulders":       return MuscleGroup.SHOULDERS;
-            case "upper arms":
-            case "lower arms":      return MuscleGroup.ARMS;
-            case "upper legs":
-            case "lower legs":      return MuscleGroup.LEGS;
-            case "waist":           return MuscleGroup.ABS;
-            case "cardio":          return MuscleGroup.CARDIO;
-            case "neck":            return MuscleGroup.SHOULDERS;
+            case "chest":
+                return MuscleGroup.CHEST;
+            case "back":
+                return MuscleGroup.BACK;
+            case "shoulders", "neck": // Raggruppati!
+                return MuscleGroup.SHOULDERS;
+            case "upper arms", "lower arms": // Raggruppati!
+                return MuscleGroup.ARMS;
+            case "upper legs", "lower legs": // Raggruppati!
+                return MuscleGroup.LEGS;
+            case "waist":
+                return MuscleGroup.ABS;
+            case "cardio":
+                return MuscleGroup.CARDIO;
             default:
-                // Logghiamo l'avviso
                 logger.log(Level.WARNING, "Gruppo muscolare sconosciuto: {0} -> Mappato su CHEST", apiBodyPart);
                 return MuscleGroup.CHEST;
         }
