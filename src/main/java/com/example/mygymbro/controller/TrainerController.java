@@ -6,6 +6,7 @@ import com.example.mygymbro.bean.WorkoutPlanBean;
 import com.example.mygymbro.dao.DAOFactory;
 import com.example.mygymbro.dao.UserDAO;
 import com.example.mygymbro.dao.WorkoutPlanDAO;
+import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.Athlete;
 import com.example.mygymbro.model.WorkoutExercise;
 import com.example.mygymbro.model.WorkoutPlan;
@@ -13,8 +14,13 @@ import com.example.mygymbro.views.TrainerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TrainerController implements Controller {
+
+    private static final Logger LOGGER = Logger.getLogger(TrainerController.class.getName());
+    private static final String DEFAULT_EXERCISE_NAME = "Sconosciuto";
 
     private TrainerView view;
     private UserDAO userDAO;
@@ -38,16 +44,32 @@ public class TrainerController implements Controller {
     private void loadAllAthletes() {
         try {
             // MOCK DATI (O usa userDAO.findAllAthletes() se implementato)
-            List<AthleteBean> dummyAthletes = new ArrayList<>();
-            AthleteBean a1 = new AthleteBean(); a1.setUsername("mario"); a1.setNome("Mario"); a1.setCognome("Rossi"); a1.setId(1);
-            AthleteBean a2 = new AthleteBean(); a2.setUsername("luigi"); a2.setNome("Luigi"); a2.setCognome("Verdi"); a2.setId(2);
-            dummyAthletes.add(a1);
-            dummyAthletes.add(a2);
-
+            List<AthleteBean> dummyAthletes = createMockAthletes();
             view.showAthletesList(dummyAthletes);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento degli atleti", e);
         }
+    }
+
+    private List<AthleteBean> createMockAthletes() {
+        List<AthleteBean> athletes = new ArrayList<>();
+
+        AthleteBean a1 = new AthleteBean();
+        a1.setUsername("mario");
+        a1.setNome("Mario");
+        a1.setCognome("Rossi");
+        a1.setId(1);
+
+        AthleteBean a2 = new AthleteBean();
+        a2.setUsername("luigi");
+        a2.setNome("Luigi");
+        a2.setCognome("Verdi");
+        a2.setId(2);
+
+        athletes.add(a1);
+        athletes.add(a2);
+
+        return athletes;
     }
 
     public void loadPlansForAthlete(AthleteBean athleteBean) {
@@ -56,14 +78,12 @@ public class TrainerController implements Controller {
             model.setId(athleteBean.getId());
 
             List<WorkoutPlan> plans = workoutPlanDAO.findByAthlete(model);
-
-            // QUI ERA IL BUG: Ora usiamo un metodo completo per convertire anche gli esercizi!
             List<WorkoutPlanBean> beans = convertModelsToBeans(plans);
 
             view.showAthletePlans(beans);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il caricamento delle schede", e);
             view.showError("Errore caricamento schede.");
         }
     }
@@ -71,8 +91,7 @@ public class TrainerController implements Controller {
     public void createNewPlan() {
         AthleteBean selectedAthlete = view.getSelectedAthlete();
         if (selectedAthlete != null) {
-            System.out.println("Creazione scheda per: " + selectedAthlete.getUsername());
-            // Ora chiamiamo il metodo corretto
+            LOGGER.log(Level.INFO, "Creazione scheda per: {0}", selectedAthlete.getUsername());
             ApplicationController.getInstance().loadWorkoutBuilderForClient(selectedAthlete);
         } else {
             view.showError("Seleziona un cliente dalla lista!");
@@ -81,15 +100,11 @@ public class TrainerController implements Controller {
 
     public void modifySelectedPlan() {
         WorkoutPlanBean plan = view.getSelectedPlan();
-        // RECUPERIAMO IL CLIENTE ATTUALMENTE SELEZIONATO NELLA VISTA
         AthleteBean currentClient = view.getSelectedAthlete();
 
         if (plan != null) {
-            System.out.println("Modifica scheda: " + plan.getName());
-
-            // FIX: Passiamo sia la scheda SIA il cliente all'ApplicationController
+            LOGGER.log(Level.INFO, "Modifica scheda: {0}", plan.getName());
             ApplicationController.getInstance().loadWorkoutBuilder(plan, currentClient);
-
         } else {
             view.showError("Nessuna scheda selezionata!");
         }
@@ -102,45 +117,72 @@ public class TrainerController implements Controller {
     @Override
     public void dispose() {
         // Pulizia risorse se necessarie
-
     }
 
-    // --- HELPER DI CONVERSIONE COMPLETO (Copia da NavigationController) ---
+    // --- HELPER DI CONVERSIONE COMPLETO ---
     private List<WorkoutPlanBean> convertModelsToBeans(List<WorkoutPlan> models) {
         List<WorkoutPlanBean> beans = new ArrayList<>();
-        if (models == null) return beans;
+        if (models == null) {
+            return beans;
+        }
 
         for (WorkoutPlan plan : models) {
-            WorkoutPlanBean bean = new WorkoutPlanBean();
-            bean.setId(plan.getId());
-            bean.setName(plan.getName());
-            bean.setComment(plan.getComment());
-
-            // CONVERSIONE ESERCIZI (Il pezzo mancante!)
-            List<WorkoutExerciseBean> exerciseBeans = new ArrayList<>();
-            if (plan.getExercises() != null) {
-                for (WorkoutExercise modelEx : plan.getExercises()) {
-                    WorkoutExerciseBean exBean = new WorkoutExerciseBean();
-
-                    if (modelEx.getExercise() != null) {
-                        exBean.setExerciseName(modelEx.getExercise().getName());
-                        // Recupera muscolo se presente
-                        if (modelEx.getExercise().getMuscleGroup() != null) {
-                            exBean.setMuscleGroup(modelEx.getExercise().getMuscleGroup().name());
-                        }
-                    } else {
-                        exBean.setExerciseName("Sconosciuto");
-                    }
-
-                    exBean.setSets(modelEx.getSets());
-                    exBean.setReps(modelEx.getReps());
-                    exBean.setRestTime(modelEx.getRestTime());
-                    exerciseBeans.add(exBean);
-                }
-            }
-            bean.setExerciseList(exerciseBeans);
+            WorkoutPlanBean bean = convertPlanToBean(plan);
             beans.add(bean);
         }
         return beans;
     }
+
+    private WorkoutPlanBean convertPlanToBean(WorkoutPlan plan) {
+        WorkoutPlanBean bean = new WorkoutPlanBean();
+        bean.setId(plan.getId());
+        bean.setName(plan.getName());
+        bean.setComment(plan.getComment());
+
+        List<WorkoutExerciseBean> exerciseBeans = convertExercisesToBeans(plan.getExercises());
+        bean.setExerciseList(exerciseBeans);
+
+        return bean;
     }
+
+    private List<WorkoutExerciseBean> convertExercisesToBeans(List<WorkoutExercise> exercises) {
+        List<WorkoutExerciseBean> exerciseBeans = new ArrayList<>();
+
+        if (exercises == null) {
+            return exerciseBeans;
+        }
+
+        for (WorkoutExercise modelEx : exercises) {
+            WorkoutExerciseBean exBean = convertExerciseToBean(modelEx);
+            exerciseBeans.add(exBean);
+        }
+
+        return exerciseBeans;
+    }
+
+    private WorkoutExerciseBean convertExerciseToBean(WorkoutExercise modelEx) {
+        WorkoutExerciseBean exBean = new WorkoutExerciseBean();
+
+        exBean.setExerciseName(extractExerciseName(modelEx));
+        exBean.setMuscleGroup(extractMuscleGroup(modelEx));
+        exBean.setSets(modelEx.getSets());
+        exBean.setReps(modelEx.getReps());
+        exBean.setRestTime(modelEx.getRestTime());
+
+        return exBean;
+    }
+
+    private String extractExerciseName(WorkoutExercise modelEx) {
+        if (modelEx.getExercise() != null) {
+            return modelEx.getExercise().getName();
+        }
+        return DEFAULT_EXERCISE_NAME;
+    }
+
+    private String extractMuscleGroup(WorkoutExercise modelEx) {
+        if (modelEx.getExercise() != null && modelEx.getExercise().getMuscleGroup() != null) {
+            return modelEx.getExercise().getMuscleGroup().name();
+        }
+        return null;
+    }
+}

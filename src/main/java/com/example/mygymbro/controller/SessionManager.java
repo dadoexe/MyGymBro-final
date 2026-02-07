@@ -2,9 +2,6 @@ package com.example.mygymbro.controller;
 
 import com.example.mygymbro.bean.UserBean;
 
-
-import javax.security.auth.login.LoginException;
-
 public final class SessionManager {
 
     private UserBean currentUser;
