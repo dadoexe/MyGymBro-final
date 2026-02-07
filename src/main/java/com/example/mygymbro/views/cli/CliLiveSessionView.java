@@ -116,7 +116,7 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
             if (line.isEmpty()) continue;
             try {
                 return Integer.parseInt(line);
-            } catch (NumberFormatException numberFormatException) {
+            } catch (NumberFormatException _) {
                 System.out.print("Numero non valido: ");
             }
         }
@@ -130,7 +130,7 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
             if (line.isEmpty()) continue;
             try {
                 return Float.parseFloat(line);
-            } catch (NumberFormatException numberFormatException) {
+            } catch (NumberFormatException _) {
                 System.out.print("Numero non valido: ");
             }
         }
