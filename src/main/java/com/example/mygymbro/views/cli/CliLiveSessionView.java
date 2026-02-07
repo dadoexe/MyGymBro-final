@@ -120,11 +120,39 @@ public class CliLiveSessionView implements LiveSessionView, CliView {
     }
 
     // Getter standard...
-    @Override public int getInputReps() { return inputReps; }
-    @Override public float getInputWeight() { return inputWeight; }
-    @Override public void clearInputFields() {}
-    @Override public void updateSessionProgress(double p) {}
-    @Override public void setListener(LiveSessionController c) { this.listener = c; }
-    @Override public void showError(String m) { System.out.println("❌ " + m); }
-    @Override public void showSuccess(String m) {}
+    @Override
+    public int getInputReps() {
+        return inputReps;
+    }
+
+    @Override
+    public float getInputWeight() {
+        return inputWeight;
+    }
+
+    @Override
+    public void clearInputFields() {
+        // Intenzionalmente vuoto: Nella CLI l'input è sequenziale, non ci sono campi da pulire.
+    }
+
+    @Override
+    public void updateSessionProgress(double p) {
+        // Intenzionalmente vuoto: La CLI non ha una progress bar visuale.
+    }
+
+    @Override
+    public void setListener(LiveSessionController c) {
+        this.listener = c;
+    }
+
+    @Override
+    public void showError(String m) {
+        System.out.println("❌ " + m);
+    }
+
+    @Override
+    public void showSuccess(String m) {
+        // Già che ci siamo, stampiamolo! Risolve il problema del parametro inutilizzato.
+        System.out.println("✅ " + m);
+    }
 }

@@ -131,8 +131,7 @@ public class CliTrainerView implements TrainerView, CliView {
             if (index >= 0 && index < cachedPlans.size()) {
                 this.selectedPlan = cachedPlans.get(index);
                 listener.modifySelectedPlan();
-                // NON mettiamo running=false qui se modifySelectedPlan cambia view,
-                // ma di solito modifyPlan lo fa. Se lo fa, aggiungi running=false;
+
             } else {
                 System.out.println("Indice non valido.");
             }
