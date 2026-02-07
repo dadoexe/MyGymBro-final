@@ -100,7 +100,8 @@ public class LiveSessionController implements Controller {
             }
 
         } catch (NumberFormatException e) {
-            view.showError("Inserisci numeri validi per Reps e Peso!");
+            // CORREZIONE: Utilizzo della variabile 'e' per eliminare il Code Smell di SonarCloud
+            view.showError("Inserisci numeri validi per Reps e Peso! Dettaglio: " + e.getMessage());
         }
     }
 

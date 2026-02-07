@@ -26,48 +26,48 @@ public class MySQLExerciseDAO implements ExerciseDAO {
 
     @Override
     public Exercise findByName(String name) throws SQLException {
-        //definisco la query
-        String query = "SELECT * FROM exercise WHERE name=?";
+        // CORREZIONE: Elenco esplicitamente le colonne invece di usare *
+        String query = "SELECT id, name, description, muscle_group FROM exercise WHERE name = ?";
 
         Connection conn = null;
         PreparedStatement statement = null;
         ResultSet rs = null;
         Exercise exercise = null;
-        try{
+
+        try {
             conn = DBConnect.getConnection();
             statement = conn.prepareStatement(query);
             statement.setString(1, name);
             rs = statement.executeQuery();
-            if(rs.next()){
 
+            if (rs.next()) {
                 exercise = mapRowToExercise(rs);
             }
-
-        }finally{
+        } finally {
             DAOUtils.close(conn, statement, rs);
         }
-            return exercise;
+        return exercise;
     }
 
     @Override
-    public List<Exercise> findAll()  throws SQLException {
+    public List<Exercise> findAll() throws SQLException {
+        // CORREZIONE: Elenco esplicitamente le colonne
+        String query = "SELECT id, name, description, muscle_group FROM exercise ORDER BY name ASC";
 
-        String query = "SELECT * FROM exercise ORDER BY name ASC";
         Connection conn = null;
         PreparedStatement statement = null;
         ResultSet rs = null;
-        //inizializzo lista vuota per riempirla in seguito
-        List<Exercise> exercises = new ArrayList<Exercise>();
-        try{
+        List<Exercise> exercises = new ArrayList<>();
+
+        try {
             conn = DBConnect.getConnection();
             statement = conn.prepareStatement(query);
             rs = statement.executeQuery();
-            //finche ci sono righe
-            while (rs.next()) {
-                exercises.add(mapRowToExercise(rs)); // Riutilizzo!
-            }
 
-        }finally{
+            while (rs.next()) {
+                exercises.add(mapRowToExercise(rs));
+            }
+        } finally {
             DAOUtils.close(conn, statement, rs);
         }
         return exercises;

@@ -39,7 +39,6 @@ public class Main extends Application {
         // --- INTERRUTTORE DI AVVIO ---
         if (wantCli) {
             // 1. MODALITÀ TESTUALE (CLI)
-            System.out.println(">>> AVVIO MYGYMBRO IN MODALITÀ CONSOLE (CLI) <<<");
 
             ApplicationController app = ApplicationController.getInstance();
 
