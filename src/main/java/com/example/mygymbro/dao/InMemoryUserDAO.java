@@ -16,7 +16,7 @@ public class InMemoryUserDAO implements UserDAO {
         // 1. Utente DEMO (Atleta)
         Athlete demoUser = new Athlete();
         demoUser.setId(1);
-        demoUser.setUsername("demo");
+        demoUser.setUsername("atleta");
         demoUser.setPassword("demo");
         demoUser.setNome("Mario");
         demoUser.setCognome("Rossi");
