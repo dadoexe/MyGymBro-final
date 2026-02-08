@@ -25,13 +25,31 @@ public class MySQLWorkoutPlanDAO implements WorkoutPlanDAO {
 
     @Override
     public void save(WorkoutPlan plan) throws DAOException {
+        // 🎯 VALIDAZIONE BUSINESS
+        if (plan == null) {
+            throw new DAOException("Piano di allenamento nullo non può essere salvato", null);
+        }
+
+        if (plan.getExercises() == null || plan.getExercises().isEmpty()) {
+            throw new DAOException("Il piano deve contenere almeno un esercizio", null);
+        }
+
+        if (plan.getName() == null || plan.getName().trim().isEmpty()) {
+            throw new DAOException("Il piano deve avere un nome valido", null);
+        }
+
         Connection conn = null;
         try {
             conn = DBConnect.getConnection();
+
+            // 🎯 VALIDAZIONE CONNESSIONE
+            if (conn == null) {
+                throw new DAOException("Impossibile ottenere connessione al database", null);
+            }
+
             conn.setAutoCommit(false);
 
             boolean isUpdate = (plan.getId() > 0);
-
             if (isUpdate) {
                 updateWorkoutPlan(plan, conn);
             } else {
@@ -39,12 +57,23 @@ public class MySQLWorkoutPlanDAO implements WorkoutPlanDAO {
             }
 
             saveWorkoutExercises(plan, conn, isUpdate);
-
             conn.commit();
+
+            // 🎯 LOGGING SUCCESSO
+            LOGGER.log(Level.INFO, "Piano salvato con successo: {0} (ID: {1})",
+                    new Object[]{plan.getName(), plan.getId()});
 
         } catch (SQLException e) {
             rollbackConnection(conn);
-            throw new DAOException("Errore durante il salvataggio della scheda", e);
+
+            // 🎯 LOGICA SPECIFICA PER TIPO DI ERRORE SQL
+            if (e.getErrorCode() == 1062) { // Duplicate key
+                throw new DAOException("Esiste già un piano con questo ID", e);
+            } else if (e.getErrorCode() == 1452) { // Foreign key constraint
+                throw new DAOException("Atleta non valido o esercizio non esistente", e);
+            } else {
+                throw new DAOException("Errore database durante il salvataggio: " + e.getMessage(), e);
+            }
         } finally {
             DAOUtils.closeConnection(conn);
         }
