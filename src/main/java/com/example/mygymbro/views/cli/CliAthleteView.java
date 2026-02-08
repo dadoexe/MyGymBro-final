@@ -38,11 +38,8 @@ public class CliAthleteView implements AthleteView, CliView {
         while (isSessionActive()) {
             printMainMenu();
             String choice = scanner.nextLine().trim();
-            if (choice.isEmpty()) {
-                continue;
-            }
 
-            if (!processMainMenuChoice(choice)) {
+            if (!choice.isEmpty() && !processMainMenuChoice(choice)) {
                 break; // Esce dal loop se l'utente sceglie logout o cambio vista
             }
         }
@@ -165,10 +162,8 @@ public class CliAthleteView implements AthleteView, CliView {
 
     private void deletePlanFlow(WorkoutPlanBean plan) {
         System.out.print("Sicuro? (si/no): ");
-        if (scanner.nextLine().trim().equalsIgnoreCase("si")) {
-            if (listener != null) {
-                listener.deletePlan(plan);
-            }
+        if (scanner.nextLine().trim().equalsIgnoreCase("si") && listener != null) {
+            listener.deletePlan(plan);
         }
     }
 
