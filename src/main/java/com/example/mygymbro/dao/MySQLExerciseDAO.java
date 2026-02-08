@@ -111,7 +111,7 @@ public class MySQLExerciseDAO implements ExerciseDAO {
                 exercises.add(mapRowToExercise(rs));
             }
 
-            LOGGER.log(Level.FINE, "Ricerca '{0}': trovati {1} esercizi",
+            LOGGER.log(Level.FINE, "Ricerca ''{0}'': trovati {1} esercizi",
                     new Object[]{keyword, exercises.size()});
 
         } catch (SQLException e) {
@@ -132,7 +132,7 @@ public class MySQLExerciseDAO implements ExerciseDAO {
                     rs.getString("description"),
                     MuscleGroup.valueOf(rs.getString("muscle_group").toUpperCase())
             );
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             // Gestione caso in cui muscle_group nel DB non corrisponde a nessun valore enum
             LOGGER.log(Level.WARNING, "Valore muscle_group non valido nel database per esercizio ID: {0}",
                     rs.getInt("id"));
