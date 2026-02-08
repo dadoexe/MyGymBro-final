@@ -87,7 +87,8 @@ public class GraphicViewFactory implements ViewFactory {
             view.setRoot(root);
             return (T) view;
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il caricamento della vista " + viewName, e);
+            String message = String.format("Errore durante il caricamento della vista %s", viewName);
+            LOGGER.log(Level.SEVERE, message, e);
             return null;
         }
     }

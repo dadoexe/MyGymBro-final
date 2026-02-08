@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 public class DBConnect {
 
-    private static final Logger logger = Logger.getLogger(DBConnect.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DBConnect.class.getName());
 
     private static final String URL = "jdbc:mysql://localhost:3306/mygymbro";
 
@@ -17,6 +17,11 @@ public class DBConnect {
     private static final String PASS = System.getenv("DB_PASSWORD");
 
     private static Connection connection = null;
+
+    // Costruttore privato per impedire l'istanziazione di questa classe utility
+    private DBConnect() {
+        throw new IllegalStateException("Utility class");
+    }
 
     public static Connection getConnection() {
         try {
@@ -28,10 +33,10 @@ public class DBConnect {
                 String dbPass = (PASS != null) ? PASS : "";
 
                 connection = DriverManager.getConnection(URL, dbUser, dbPass);
-                logger.log(Level.INFO, "Connessione DB stabilita con successo!");
+                LOGGER.log(Level.INFO, "Connessione DB stabilita con successo!");
             }
         } catch (SQLException | ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Errore di connessione nel DAO", e);
+            LOGGER.log(Level.SEVERE, "Errore di connessione nel DAO", e);
             return null;
         }
         return connection;
