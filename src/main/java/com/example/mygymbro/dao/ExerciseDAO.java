@@ -1,13 +1,15 @@
 package com.example.mygymbro.dao;
 
+import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.Exercise;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public interface ExerciseDAO {
 
-    Exercise findByName(String name) throws SQLException;
-    List<Exercise> findAll()  throws SQLException;
-    List<Exercise> search(String keyword);
+    Exercise findByName(String name) throws DAOException;
+
+    List<Exercise> findAll() throws DAOException;
+
+    List<Exercise> search(String keyword) throws DAOException;
 }

@@ -3,12 +3,13 @@ package com.example.mygymbro.controller;
 import com.example.mygymbro.bean.UserBean;
 import com.example.mygymbro.dao.DAOFactory;
 import com.example.mygymbro.dao.UserDAO;
+import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.exceptions.InvalidCredentialsException;
 import com.example.mygymbro.model.PersonalTrainer;
 import com.example.mygymbro.model.User;
 import com.example.mygymbro.views.LoginView;
 
-import java.sql.SQLException;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,7 +61,7 @@ public class LoginController implements Controller {
             LOGGER.log(Level.WARNING, "Tentativo di login fallito per username: {0}", username);
             view.showError("Accesso Negato: " + e.getMessage());
 
-        } catch (SQLException e) {
+        }catch (DAOException e) {
             LOGGER.log(Level.SEVERE, "Errore database durante il login", e);
             view.showError("Errore tecnico del Database.");
         }

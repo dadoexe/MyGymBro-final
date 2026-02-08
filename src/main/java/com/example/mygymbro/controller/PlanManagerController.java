@@ -8,7 +8,6 @@ import com.example.mygymbro.exceptions.DAOException;
 import com.example.mygymbro.model.*;
 import com.example.mygymbro.views.WorkoutBuilderView;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -174,17 +173,23 @@ public class PlanManagerController implements Controller {
                     .map(this::toExerciseBean)
                     .toList();
             view.populateExerciseMenu(beans);
-        } catch (SQLException e) {
+        } catch (DAOException e) {
             LOGGER.log(Level.WARNING, "Impossibile caricare gli esercizi disponibili", e);
             view.populateExerciseMenu(new ArrayList<>());
         }
     }
 
     public List<ExerciseBean> searchExercisesOnApi(String keyword) {
-        List<Exercise> results = exerciseDAO.search(keyword);
-        return results.stream()
-                .map(this::toExerciseBean)
-                .toList();
+        try {
+            List<Exercise> results = exerciseDAO.search(keyword);
+            return results.stream()
+                    .map(this::toExerciseBean)
+                    .toList();
+        } catch (DAOException e) {
+            LOGGER.log(Level.WARNING, "Errore durante la ricerca degli esercizi: {0}", keyword);
+            LOGGER.log(Level.WARNING, "Dettaglio errore", e);
+            return new ArrayList<>();
+        }
     }
 
     private void populateViewWithPlanData() {
