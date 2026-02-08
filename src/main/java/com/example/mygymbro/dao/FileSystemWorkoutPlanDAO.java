@@ -9,10 +9,13 @@ import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
 
-    private static final String JSON_EXT = ".json"; // Costante per evitare duplicati
+    private static final Logger LOGGER = Logger.getLogger(FileSystemWorkoutPlanDAO.class.getName());
+    private static final String JSON_EXT = ".json";
 
     // Costruiamo il percorso in modo sicuro per ogni sistema operativo
     private static final String DATA_DIR_PATH = System.getProperty("user.home") + File.separator + "mygymbro_data" + File.separator + "plans";
@@ -27,7 +30,7 @@ public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
         if (!dataDir.exists()) {
             boolean created = dataDir.mkdirs();
             if (!created) {
-                System.err.println("ATTENZIONE: Impossibile creare la cartella dati: " + DATA_DIR_PATH);
+                LOGGER.log(Level.WARNING, "Impossibile creare la cartella dati: {0}", DATA_DIR_PATH);
             }
         }
     }
@@ -39,7 +42,6 @@ public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
             plan.setId((int) (System.currentTimeMillis() / 1000));
         }
 
-        // CORREZIONE 1: Uso la costante .json (era "_json")
         File file = new File(dataDir, plan.getId() + JSON_EXT);
 
         try (FileWriter writer = new FileWriter(file)) {
@@ -78,13 +80,8 @@ public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
                 try (FileReader reader = new FileReader(file)) {
                     WorkoutPlan plan = gson.fromJson(reader, WorkoutPlan.class);
 
-                    // CORREZIONE 2: Logica unificata con OR (||)
                     // Controlliamo se l'atleta corrisponde (tramite oggetto O tramite ID se presente)
-                    boolean matchByObject = plan.getAthlete() != null && plan.getAthlete().getId() == athlete.getId();
-
-                    boolean matchById = plan.getAthleteId() == athlete.getId();
-
-                    if (matchByObject) {
+                    if (isAthleteMatch(plan, athlete)) {
                         result.add(plan);
                     }
 
@@ -94,5 +91,11 @@ public class FileSystemWorkoutPlanDAO implements WorkoutPlanDAO {
             }
         }
         return result;
+    }
+
+    private boolean isAthleteMatch(WorkoutPlan plan, Athlete athlete) {
+        boolean matchByObject = plan.getAthlete() != null && plan.getAthlete().getId() == athlete.getId();
+        boolean matchById = plan.getAthleteId() == athlete.getId();
+        return matchByObject || matchById;
     }
 }

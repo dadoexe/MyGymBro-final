@@ -18,8 +18,15 @@ public class CliAthleteView implements AthleteView, CliView {
         this.scanner = new Scanner(System.in);
     }
 
-    @Override public void showSuccess(String msg) { System.out.println("✅ " + msg); }
-    @Override public void showError(String msg) { System.out.println("❌ " + msg); }
+    @Override
+    public void showSuccess(String msg) {
+        System.out.println("✅ " + msg);
+    }
+
+    @Override
+    public void showError(String msg) {
+        System.out.println("❌ " + msg);
+    }
 
     @Override
     public void run() {
@@ -28,19 +35,21 @@ public class CliAthleteView implements AthleteView, CliView {
             listener.loadDashboardData();
         }
 
-        boolean stay = true;
-        while (stay) {
-            if (SessionManager.getInstance().getCurrentUser() == null) {
-                stay = false;
-                break;
-            }
-
+        while (isSessionActive()) {
             printMainMenu();
             String choice = scanner.nextLine().trim();
-            if (choice.isEmpty()) continue;
+            if (choice.isEmpty()) {
+                continue;
+            }
 
-            stay = processMainMenuChoice(choice);
+            if (!processMainMenuChoice(choice)) {
+                break; // Esce dal loop se l'utente sceglie logout o cambio vista
+            }
         }
+    }
+
+    private boolean isSessionActive() {
+        return SessionManager.getInstance().getCurrentUser() != null;
     }
 
     private void printMainMenu() {
@@ -54,13 +63,17 @@ public class CliAthleteView implements AthleteView, CliView {
     private boolean processMainMenuChoice(String choice) {
         switch (choice) {
             case "1":
-                if (listener != null) listener.loadWorkoutBuilder();
+                if (listener != null) {
+                    listener.loadWorkoutBuilder();
+                }
                 return false; // Cambio vista
             case "2":
                 // Se ritorna true, dobbiamo uscire anche da questo menu (cambio vista)
                 return !handleManagePlans();
             case "0":
-                if (listener != null) listener.logout();
+                if (listener != null) {
+                    listener.logout();
+                }
                 return false;
             default:
                 System.out.println("Comando non valido.");
@@ -75,26 +88,29 @@ public class CliAthleteView implements AthleteView, CliView {
             return false;
         }
 
-        boolean managing = true;
-        while (managing) {
-            if (SessionManager.getInstance().getCurrentUser() == null) return true;
-
+        while (isSessionActive()) {
             printPlanList();
             String input = scanner.nextLine().trim();
-            if (input.isEmpty()) continue;
+            if (input.isEmpty()) {
+                continue;
+            }
 
             int selection = parseSelection(input);
             if (selection == 0) {
-                managing = false; // Torna indietro
-            } else if (selection > 0 && selection <= myPlansCache.size()) {
+                return false; // Torna indietro
+            }
+
+            if (selection > 0 && selection <= myPlansCache.size()) {
                 WorkoutPlanBean selectedPlan = myPlansCache.get(selection - 1);
                 // Se askActionForPlan ritorna TRUE, usciamo da tutto
-                if (askActionForPlan(selectedPlan)) return true;
+                if (askActionForPlan(selectedPlan)) {
+                    return true;
+                }
             } else if (selection != -1) {
                 System.out.println("Numero non valido.");
             }
         }
-        return false;
+        return true; // Sessione terminata
     }
 
     private void printPlanList() {
@@ -110,7 +126,7 @@ public class CliAthleteView implements AthleteView, CliView {
     private int parseSelection(String input) {
         try {
             return Integer.parseInt(input);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             System.out.println("Inserisci un numero valido.");
             return -1; // Codice errore interno
         }
@@ -125,36 +141,50 @@ public class CliAthleteView implements AthleteView, CliView {
         System.out.print("Azione > ");
 
         String action = scanner.nextLine().trim();
-        switch (action) {
-            case "1":
-                if (listener != null) listener.modifyPlan(plan);
-                return true;
-            case "2":
+        return switch (action) {
+            case "1" -> {
+                if (listener != null) {
+                    listener.modifyPlan(plan);
+                }
+                yield true;
+            }
+            case "2" -> {
                 deletePlanFlow(plan);
-                return false;
-            case "3":
+                yield false;
+            }
+            case "3" -> {
                 System.out.println(">>> Avvio allenamento...");
-                if (listener != null) listener.startLiveSession(plan);
-                return true;
-            default:
-                return false;
-        }
+                if (listener != null) {
+                    listener.startLiveSession(plan);
+                }
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     private void deletePlanFlow(WorkoutPlanBean plan) {
         System.out.print("Sicuro? (si/no): ");
         if (scanner.nextLine().trim().equalsIgnoreCase("si")) {
-            if (listener != null) listener.deletePlan(plan);
+            if (listener != null) {
+                listener.deletePlan(plan);
+            }
         }
     }
 
     // ... Interface methods ...
-    @Override public void setListener(NavigationController l) { this.listener = l; }
+    @Override
+    public void setListener(NavigationController controller) {
+        this.listener = controller;
+    }
 
-    // CORREZIONE 2: Risolto "Unused method parameter"
-    @Override public void updateWelcomeMessage(String m) {
+    @Override
+    public void updateWelcomeMessage(String message) {
         // Metodo vuoto intenzionale: In CLI non mostriamo il messaggio di benvenuto dinamico
     }
 
-    @Override public void updateWorkoutList(List<WorkoutPlanBean> l) { this.myPlansCache = l; }
+    @Override
+    public void updateWorkoutList(List<WorkoutPlanBean> plans) {
+        this.myPlansCache = plans;
+    }
 }

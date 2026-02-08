@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 public class MySQLUserDAO implements UserDAO {
 
     // 1. Logger per la gestione professionale degli errori (SonarCloud Compliance)
-    private static final Logger logger = Logger.getLogger(MySQLUserDAO.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MySQLUserDAO.class.getName());
 
     @Override
     public User findByUsername(String username) {
@@ -40,8 +40,8 @@ public class MySQLUserDAO implements UserDAO {
                 user = mapResultSetToUser(rs);
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore nel findByUsername per l''utente: {0}", username);
-            logger.log(Level.SEVERE, "Dettaglio tecnico: ", e);
+            LOGGER.log(Level.SEVERE, "Errore nel findByUsername per l''utente: {0}", username);
+            LOGGER.log(Level.SEVERE, "Dettaglio tecnico: ", e);
         } finally {
             DAOUtils.close(conn, stmt, rs);
         }
@@ -74,13 +74,12 @@ public class MySQLUserDAO implements UserDAO {
             throw new SQLException("Impossibile salvare utente nullo");
         }
 
-        // 3. Pattern Matching for instanceof (Java 14+) - Toglie il warning sul cast
-        if (user instanceof Athlete athlete) {
-            saveAthlete(athlete);
-        } else if (user instanceof PersonalTrainer trainer) {
-            saveTrainer(trainer);
-        } else {
-            throw new SQLException("Tipo di utente non supportato: " + user.getClass().getName());
+        // 3. Pattern Matching con switch expression (Java 21+)
+        switch (user) {
+            case Athlete athlete -> saveAthlete(athlete);
+            case PersonalTrainer trainer -> saveTrainer(trainer);
+            case null, default -> throw new SQLException("Tipo di utente non supportato: " +
+                    (user != null ? user.getClass().getName() : "null"));
         }
     }
 
