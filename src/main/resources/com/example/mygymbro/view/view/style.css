@@ -257,3 +257,56 @@
     -fx-text-fill: #1E1E24;
     -fx-font-weight: bold;
 }
+
+/* Aggiungi questo al tuo style.css */
+.main-bg {
+    -fx-background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop');
+    -fx-background-size: cover;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}
+
+/* Overlay per scurire l'immagine e far risaltare i controlli */
+.bg-overlay {
+    -fx-background-color: rgba(18, 18, 18, 0.85);
+    -fx-background-radius: 15;
+}
+
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+.list-view {
+    -fx-background-radius: 10;
+    -fx-border-color: #333;
+    -fx-border-radius: 10;
+}
+
+/* Bottone Inizia Sessione - Versione Clean */
+.btn-start {
+    -fx-background-color: #00E676;
+    -fx-text-fill: #121212; /* Nero profondo per massimo contrasto */
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 50;
+    -fx-border-color: #ffffff;
+    -fx-border-width: 2;
+    -fx-border-radius: 50;
+    -fx-cursor: hand;
+}
+
+.btn-start:hover {
+    -fx-background-color: #00C853; /* Verde leggermente più scuro al passaggio del mouse */
+    -fx-scale-x: 1.05; /* Effetto zoom leggero invece dell'ombra */
+    -fx-scale-y: 1.05;
+}
+
+.btn-start:pressed {
+    -fx-scale-x: 0.95;
+}
+/* Sfondo specifico per la sessione di allenamento */
+.live-bg {
+    -fx-background-image: url('https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=2070&auto=format&fit=crop');
+    -fx-background-size: cover;
+    -fx-background-position: center;
+}

@@ -10,57 +10,89 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane style="-fx-background-color: #121212;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mygymbro.views.gui.GraphicTrainerView">
+<BorderPane prefHeight="650.0" prefWidth="900.0" styleClass="main-bg"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.mygymbro.views.gui.GraphicTrainerView">
 
     <stylesheets>
         <URL value="@style.css" />
     </stylesheets>
 
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-padding: 15; -fx-background-color: #1E1E24; -fx-border-color: #333; -fx-border-width: 0 0 1 0;">
-            <Label fx:id="lblWelcome" text="DASHBOARD TRAINER" textFill="WHITE">
-                <font>
-                    <Font name="System Bold" size="18.0" />
-                </font>
-            </Label>
-            <HBox HBox.hgrow="ALWAYS" /> <Button onAction="#handleLogout" styleClass="btn-danger" text="Logout" />
+        <HBox alignment="CENTER_LEFT" spacing="20"
+              style="-fx-padding: 15 30; -fx-background-color: rgba(30, 30, 36, 0.9); -fx-border-color: #333; -fx-border-width: 0 0 1 0;">
+            <VBox>
+                <Label fx:id="lblWelcome" text="DASHBOARD TRAINER" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="20.0" />
+                    </font>
+                </Label>
+                <Label text="Gestione atleti e schede" textFill="#00E676" style="-fx-font-size: 12px;" />
+            </VBox>
+
+            <HBox HBox.hgrow="ALWAYS" />
+
+            <Button onAction="#handleLogout" styleClass="btn-danger" text="Logout"
+                    style="-fx-padding: 8 20;" />
         </HBox>
     </top>
 
     <center>
-        <SplitPane dividerPositions="0.3" style="-fx-background-color: transparent;">
+        <SplitPane dividerPositions="0.35" style="-fx-background-color: transparent;">
+            <items>
+                <AnchorPane minWidth="280.0" style="-fx-background-color: rgba(30, 30, 36, 0.7);">
+                    <children>
+                        <VBox spacing="15" AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20"
+                              AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20">
 
-            <AnchorPane minWidth="250.0" style="-fx-background-color: #1E1E24;">
-                <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
-                    <Label text="I TUOI CLIENTI" textFill="#00E676">
-                        <font><Font name="System Bold" size="14.0" /></font>
-                    </Label>
-                    <ListView fx:id="listAthletes" VBox.vgrow="ALWAYS" style="-fx-background-color: #2B2B36;" />
-                </VBox>
-            </AnchorPane>
+                            <Label text="I TUOI CLIENTI" textFill="#00E676">
+                                <font><Font name="System Bold" size="14.0" /></font>
+                            </Label>
 
-            <AnchorPane style="-fx-background-color: #121212;">
-                <VBox spacing="15" AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20">
+                            <ListView fx:id="listAthletes" VBox.vgrow="ALWAYS"
+                                      style="-fx-background-color: rgba(43, 43, 54, 0.5); -fx-background-radius: 10;" />
+                        </VBox>
+                    </children>
+                </AnchorPane>
 
-                    <Label fx:id="lblSelectedClient" text="Seleziona un cliente..." textFill="WHITE">
-                        <font><Font size="22.0" /></font>
-                    </Label>
+                <AnchorPane style="-fx-background-color: transparent;">
+                    <children>
+                        <VBox spacing="20" styleClass="bg-overlay"
+                              AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20"
+                              AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20">
+                            <padding>
+                                <Insets bottom="25" left="25" right="25" top="25" />
+                            </padding>
 
-                    <Label text="SCHEDE ASSEGNATE:" textFill="#AAAAAA" />
+                            <children>
+                                <VBox spacing="5">
+                                    <Label fx:id="lblSelectedClient" text="Seleziona un cliente..." textFill="WHITE">
+                                        <font><Font name="System Bold" size="24.0" /></font>
+                                    </Label>
+                                    <Label text="SCHEDE ATTIVE PER QUESTO ATLETA:" textFill="#AAAAAA"
+                                           style="-fx-font-size: 12px; -fx-font-weight: bold;" />
+                                </VBox>
 
-                    <ListView fx:id="listWorkoutPlans" VBox.vgrow="ALWAYS" style="-fx-background-color: #1E1E24;" />
+                                <ListView fx:id="listWorkoutPlans" VBox.vgrow="ALWAYS"
+                                          style="-fx-background-color: rgba(30, 30, 36, 0.5); -fx-background-radius: 10;" />
 
-                    <HBox spacing="15" alignment="CENTER_RIGHT">
-                        <Button fx:id="btnAddPlan" text="+ ASSEGNA NUOVA SCHEDA" onAction="#handleCreatePlan"
-                                styleClass="btn-success" disable="true"/>
-                        <Button fx:id="btnEditPlan" text="MODIFICA SELEZIONATA" onAction="#handleEditPlan"
-                                styleClass="button" disable="true"/>
-                    </HBox>
-                </VBox>
-            </AnchorPane>
+                                <HBox spacing="15" alignment="CENTER_RIGHT">
+                                    <Button fx:id="btnEditPlan" text="Modifica Selezionata" onAction="#handleEditPlan"
+                                            styleClass="button" disable="true"
+                                            style="-fx-padding: 12 25; -fx-background-color: #3498db; -fx-text-fill: white;" />
 
+                                    <Button fx:id="btnAddPlan" text="+ Nuova Scheda" onAction="#handleCreatePlan"
+                                            styleClass="btn-success" disable="true"
+                                            style="-fx-padding: 12 25; -fx-font-weight: bold;" />
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+            </items>
         </SplitPane>
     </center>
 </BorderPane>

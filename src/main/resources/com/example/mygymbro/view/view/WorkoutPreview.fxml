@@ -1,34 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.effect.DropShadow?>
+<?import java.net.URL?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.mygymbro.views.gui.GraphicWorkoutPreviewView"
-            style="-fx-background-color: #121212; -fx-padding: 20;">
+<BorderPane prefHeight="650.0" prefWidth="900.0" styleClass="main-bg"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.mygymbro.views.gui.GraphicWorkoutPreviewView">
+
+    <stylesheets>
+        <URL value="@style.css" />
+    </stylesheets>
 
     <top>
-        <VBox spacing="10" alignment="CENTER_LEFT">
-            <Button text="← Indietro" onAction="#onBack" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 5;"/>
-            <Label fx:id="lblPlanName" text="NOME SCHEDA" textFill="WHITE">
-                <font><Font name="System Bold" size="28.0"/></font>
-            </Label>
-            <Label fx:id="lblDescription" text="Descrizione scheda..." textFill="#AAAAAA" wrapText="true"/>
+        <VBox spacing="15" style="-fx-padding: 25 40; -fx-background-color: rgba(30, 30, 36, 0.8); -fx-border-color: #333; -fx-border-width: 0 0 1 0;">
+            <children>
+                <Button text="← Torna alla Dashboard" onAction="#onBack"
+                        style="-fx-background-color: transparent; -fx-text-fill: #00E676; -fx-border-color: #00E676; -fx-border-radius: 5; -fx-cursor: hand; -fx-padding: 5 15;" />
+
+                <VBox spacing="5">
+                    <Label fx:id="lblPlanName" text="NOME SCHEDA" textFill="WHITE">
+                        <font><Font name="System Bold" size="32.0"/></font>
+                    </Label>
+                    <Label fx:id="lblDescription" text="Descrizione dettagliata del programma di allenamento..."
+                           textFill="#AAAAAA" wrapText="true" maxWidth="800">
+                        <font><Font size="14.0"/></font>
+                    </Label>
+                </VBox>
+            </children>
         </VBox>
     </top>
 
     <center>
-        <ListView fx:id="listExercises" style="-fx-background-color: #1E1E1E; -fx-control-inner-background: #1E1E1E;"/>
+        <StackPane>
+            <padding>
+                <Insets top="20" right="40" bottom="20" left="40" />
+            </padding>
+            <children>
+                <VBox spacing="15" styleClass="bg-overlay">
+                    <padding>
+                        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+                    </padding>
+                    <children>
+                        <Label text="RIEPILOGO ESERCIZI" textFill="#00E676" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+
+                        <ListView fx:id="listExercises" VBox.vgrow="ALWAYS"
+                                  style="-fx-background-color: rgba(30, 30, 30, 0.6); -fx-background-radius: 10; -fx-control-inner-background: transparent;"/>
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
     </center>
 
     <bottom>
-        <HBox alignment="CENTER" style="-fx-padding: 20;">
-            <Button text="INIZIA ALLENAMENTO 🚀" onAction="#onStartSession"
-                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 15 30; -fx-background-radius: 30; -fx-cursor: hand;">
-                <effect>
-                    <javafx.scene.effect.DropShadow color="#4CAF50" radius="10"/>
-                </effect>
-            </Button>
+        <HBox alignment="CENTER" style="-fx-padding: 40;">
+            <children>
+                <Button text="INIZIA SESSIONE 🚀"
+                        onAction="#onStartSession"
+                        styleClass="btn-start"
+                        prefWidth="350"
+                        prefHeight="60" />
+            </children>
         </HBox>
     </bottom>
 
