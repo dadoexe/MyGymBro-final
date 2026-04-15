@@ -1,2 +1,4 @@
 # MyGymBro-final
-repository for the final project of my workoutApp 
+Repository for the final project of my workoutApp.
+## Documentation
+[📄 View Software Requirement Specification (PDF)](MyGymBro_DOC_ENG.pdf)
